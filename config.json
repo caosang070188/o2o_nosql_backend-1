@@ -1,0 +1,12 @@
+﻿{
+    "connectionString": "mongodb://localhost:27017/authorization",
+    "secret": "THISISUSEDTOSIGNANDVERIFYJWTTOKENSREPLACEITWITHYOUROWNSECRETITBEANYSTRING",
+    "emailFrom": "info@node-mongo-signup-verification-api.com",
+    "smtpOptions": {
+        "service": "gmail",
+        "auth": {
+            "user": "ben.o2o.development@gmail.com",
+            "pass": "Dung12345"
+        }
+    }
+}
