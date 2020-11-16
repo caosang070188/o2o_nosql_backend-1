@@ -29,20 +29,22 @@ async function authenticate({ username, password, ipAddress }) {
         { data } = res
     const account = await db.Account.findOne({ username });
 
-    account.avatar = data.avatar
-    account.cover = data.cover
-    account.userId = data.user_id
-    account.userPassword = data.password
-    account.background_image = data.background_image
-    account.address = data.address
-    account.working = data.working
-    account.working_link = data.working_link
-    account.about = data.about
-    account.school = data.school
-    account.gender = data.gender
-    account.birthday = data.birthday
-    account.language = data.language
-    await account.save()
+    if (account) {
+        account.avatar = data.avatar
+        account.cover = data.cover
+        account.userId = data.user_id
+        account.userPassword = data.password
+        account.background_image = data.background_image
+        account.address = data.address
+        account.working = data.working
+        account.working_link = data.working_link
+        account.about = data.about
+        account.school = data.school
+        account.gender = data.gender
+        account.birthday = data.birthday
+        account.language = data.language
+        await account.save()
+    }
     if (!account || !account.isVerified || !bcrypt.compareSync(password, account.passwordHash)) {
         throw 'Username or password is incorrect';
     }
