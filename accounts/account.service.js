@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const sendEmail = require('_helpers/send-email');
 const db = require('_helpers/db');
 const Role = require('_helpers/role');
+const axios = require("axios");
 
 module.exports = {
     authenticate,
@@ -19,14 +20,31 @@ module.exports = {
     getById,
     create,
     update,
-    delete: _delete
+    delete: _delete,
+    authorization
 };
 
-async function authenticate({ email, password, ipAddress }) {
-    const account = await db.Account.findOne({ email });
+async function authenticate({ username, password, ipAddress }) {
+    const res = await axios.get(`https://o2oviet.com/user-check-register.php?username=${username}&password=${password}`),
+        { data } = res
+    const account = await db.Account.findOne({ username });
 
+    account.avatar = data.avatar
+    account.cover = data.cover
+    account.userId = data.user_id
+    account.userPassword = data.password
+    account.background_image = data.background_image
+    account.address = data.address
+    account.working = data.working
+    account.working_link = data.working_link
+    account.about = data.about
+    account.school = data.school
+    account.gender = data.gender
+    account.birthday = data.birthday
+    account.language = data.language
+    await account.save()
     if (!account || !account.isVerified || !bcrypt.compareSync(password, account.passwordHash)) {
-        throw 'Email or password is incorrect';
+        throw 'Username or password is incorrect';
     }
     const token = generateJwtToken(account);
     const refreshToken = generateRefreshToken(account, ipAddress);
@@ -73,17 +91,33 @@ async function revokeToken({ token, ipAddress }) {
 
 async function register(params, origin) {
     // validate
-    if (await db.Account.findOne({ email: params.email })) {
+    const res = await axios.get(`https://o2oviet.com/user-check-register.php?username=${params.username}&password=${params.password}`),
+        { data } = res
+    if (await db.Account.findOne({ username: params.username })) {
         // send already registered error in email to prevent account enumeration
-        return await sendAlreadyRegisteredEmail(params.email, origin);
+        const tempUser = await db.Account.findOne({ username: params.username })
+        return await sendAlreadyRegisteredEmail(tempUser.email, origin);
     }
+
 
     // create account object
     const account = new db.Account(params);
 
+    account.avatar = data.avatar
+    account.cover = data.cover
+    account.userId = data.user_id
+    account.userPassword = data.password
+    account.background_image = data.background_image
+    account.address = data.address
+    account.working = data.working
+    account.working_link = data.working_link
+    account.about = data.about
+    account.school = data.school
+    account.gender = data.gender
+    account.birthday = data.birthday
+    account.language = data.language
     // first registered account is an admin
-    const isFirstAccount = (await db.Account.countDocuments({})) === 0;
-    account.role = isFirstAccount ? Role.Admin : Role.User;
+    account.role = Role.User;
     account.verificationToken = randomTokenString();
 
     // hash password
@@ -97,8 +131,7 @@ async function register(params, origin) {
 }
 
 async function verifyEmail({ token }) {
-    const account = await db.Account.findOne({ verificationToken: token });
-
+    const account = await db.Account.findOne({ verificationToken: token })
     if (!account) throw 'Verification failed';
 
     account.verified = Date.now();
@@ -201,6 +234,18 @@ async function _delete(id) {
     await account.remove();
 }
 
+async function authorization(token) {
+    const { email } = jwt.decode(token),
+        account = await db.Account.findOne({ email })
+    if (!account) throw "Authorization fail!"
+    const verify = jwt.verify(token, config.secret)
+    if (!verify) throw "Authorization fail!"
+    return {
+        email: account.email,
+        username: account.username
+    }
+}
+
 // helper functions
 
 async function getAccount(id) {
@@ -222,7 +267,7 @@ function hash(password) {
 
 function generateJwtToken(account) {
     // create a jwt token containing the account id that expires in 15 minutes
-    return jwt.sign({ sub: account.id, id: account.id }, config.secret, { expiresIn: '15m' });
+    return jwt.sign({ sub: account.id, id: account.id, email: account.email }, config.secret, { expiresIn: '365d' });
 }
 
 function generateRefreshToken(account, ipAddress) {
@@ -240,8 +285,8 @@ function randomTokenString() {
 }
 
 function basicDetails(account) {
-    const { id, title, firstName, lastName, email, role, created, updated, isVerified } = account;
-    return { id, title, firstName, lastName, email, role, created, updated, isVerified };
+    const { id, title, firstName, lastName, email, role, created, updated, isVerified, avatar, cover, background_image, address, working, working_link, about, school, gender, birthday, language } = account;
+    return { id, title, firstName, lastName, email, role, created, updated, isVerified, avatar, cover, background_image, address, working, working_link, about, school, gender, birthday, language };
 }
 
 async function sendVerificationEmail(account, origin) {

@@ -20,21 +20,22 @@ router.get('/:id', authorize(), getById);
 router.post('/', authorize(Role.Admin), createSchema, create);
 router.put('/:id', authorize(), updateSchema, update);
 router.delete('/:id', authorize(), _delete);
+router.post('/authorization/:token', authorizationSchema, authorization);
 
 module.exports = router;
 
 function authenticateSchema(req, res, next) {
     const schema = Joi.object({
-        email: Joi.string().required(),
+        username: Joi.string().required(),
         password: Joi.string().required()
     });
     validateRequest(req, next, schema);
 }
 
 function authenticate(req, res, next) {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
     const ipAddress = req.ip;
-    accountService.authenticate({ email, password, ipAddress })
+    accountService.authenticate({ username, password, ipAddress })
         .then(({ refreshToken, ...account }) => {
             setTokenCookie(res, refreshToken);
             res.json(account);
@@ -82,6 +83,7 @@ function registerSchema(req, res, next) {
         title: Joi.string().required(),
         firstName: Joi.string().required(),
         lastName: Joi.string().required(),
+        username: Joi.string().required(),
         email: Joi.string().email().required(),
         password: Joi.string().min(6).required(),
         confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
@@ -236,4 +238,16 @@ function setTokenCookie(res, token) {
         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     };
     res.cookie('refreshToken', token, cookieOptions);
+}
+
+function authorizationSchema(req, res, next) {
+    const schema = Joi.object({});
+    validateRequest(req, next, schema);
+}
+
+function authorization(req, res, next) {
+    const { params: { token } } = req
+    accountService.authorization(token)
+        .then(result => res.status(200).json({ email: result.email, username: result.username, message: "Authorization successfull!" }))
+        .catch(next)
 }

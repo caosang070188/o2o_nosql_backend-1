@@ -21,12 +21,12 @@ paths:
             schema:
               type: object
               properties:
-                email:
+                username:
                   type: string
-                  example: "jason@example.com"
+                  example: "caosang"
                 password:
                   type: string
-                  example: "pass123"
+                  example: "123456@sang"
               required:
                 - email
                 - password
@@ -56,9 +56,9 @@ paths:
                   lastName:
                     type: string
                     example: "Watmore"
-                  email:
+                  username:
                     type: string
-                    example: "jason@example.com"
+                    example: "caosang"
                   role:
                     type: string
                     example: "Admin"
@@ -119,9 +119,9 @@ paths:
                   lastName:
                     type: string
                     example: "Watmore"
-                  email:
+                  username:
                     type: string
-                    example: "jason@example.com"
+                    example: "caosang"
                   role:
                     type: string
                     example: "Admin"
@@ -211,15 +211,18 @@ paths:
                 lastName:
                   type: string
                   example: "Watmore"
+                username:
+                  type: string
+                  example: "caosang"
                 email:
                   type: string
-                  example: "jason@example.com"
+                  example: "dunfoto@gmail.com"
                 password:
                   type: string
-                  example: "pass123"
+                  example: "123456@sang"
                 confirmPassword:
                   type: string
-                  example: "pass123"
+                  example: "123456@sang"
                 acceptTerms:
                   type: boolean
               required:
@@ -291,7 +294,7 @@ paths:
               properties:
                 email:
                   type: string
-                  example: "jason@example.com"
+                  example: "dunfoto@gmail.com"
               required:
                 - email
       responses:
@@ -416,9 +419,9 @@ paths:
                     lastName:
                       type: string
                       example: "Watmore"
-                    email:
+                    username:
                       type: string
-                      example: "jason@example.com"
+                      example: "caosang"
                     role:
                       type: string
                       example: "Admin"
@@ -452,15 +455,15 @@ paths:
                 lastName:
                   type: string
                   example: "Watmore"
-                email:
+                username:
                   type: string
-                  example: "jason@example.com"
+                  example: "caosang"
                 password:
                   type: string
-                  example: "pass123"
+                  example: "123456@sang"
                 confirmPassword:
                   type: string
-                  example: "pass123"
+                  example: "123456@sang"
                 role:
                   type: string
                   enum: [Admin, User]
@@ -492,9 +495,9 @@ paths:
                   lastName:
                     type: string
                     example: "Watmore"
-                  email:
+                  username:
                     type: string
-                    example: "jason@example.com"
+                    example: "caosang"
                   role:
                     type: string
                     example: "Admin"
@@ -548,9 +551,9 @@ paths:
                   lastName:
                     type: string
                     example: "Watmore"
-                  email:
+                  username:
                     type: string
-                    example: "jason@example.com"
+                    example: "caosang"
                   role:
                     type: string
                     example: "Admin"
@@ -586,15 +589,15 @@ paths:
                 lastName:
                   type: string
                   example: "Watmore"
-                email:
+                username:
                   type: string
-                  example: "jason@example.com"
+                  example: "caosang"
                 password:
                   type: string
-                  example: "pass123"
+                  example: "123456@sang"
                 confirmPassword:
                   type: string
-                  example: "pass123"
+                  example: "123456@sang"
                 role:
                   type: string
                   enum: [Admin, User]
@@ -618,9 +621,9 @@ paths:
                   lastName:
                     type: string
                     example: "Watmore"
-                  email:
+                  username:
                     type: string
-                    example: "jason@example.com"
+                    example: "caosang"
                   role:
                     type: string
                     example: "Admin"
