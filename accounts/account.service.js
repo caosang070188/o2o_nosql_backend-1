@@ -269,7 +269,7 @@ function hash(password) {
 
 function generateJwtToken(account) {
     // create a jwt token containing the account id that expires in 15 minutes
-    return jwt.sign({ sub: account.id, id: account.id, email: account.email }, config.secret, { expiresIn: '365d' });
+    return jwt.sign({ sub: account.id, id: account.id, email: account.email, username: account.username }, config.secret, { expiresIn: '365d' });
 }
 
 function generateRefreshToken(account, ipAddress) {
