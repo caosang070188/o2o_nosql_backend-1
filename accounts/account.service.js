@@ -27,36 +27,50 @@ module.exports = {
 async function authenticate({ username, password, ipAddress }) {
     const res = await axios.get(`https://o2oviet.com/user-check-register.php?username=${username}&password=${password}`),
         { data } = res
-    const account = await db.Account.findOne({ username });
 
-    if (account) {
-        account.avatar = data.avatar
-        account.cover = data.cover
-        account.userId = data.user_id
-        account.userPassword = data.password
-        account.background_image = data.background_image
-        account.address = data.address
-        account.working = data.working
-        account.working_link = data.working_link
-        account.about = data.about
-        account.school = data.school
-        account.gender = data.gender
-        account.birthday = data.birthday
-        account.language = data.language
-        await account.save()
-    }
-    if (!account || !account.isVerified || !bcrypt.compareSync(password, account.passwordHash)) {
+    console.log(hash(password))
+    if (res.status === 200) {
+        const existAccount = {}
+        existAccount.username = username
+        existAccount.firstName = data.first_name
+        existAccount.lastName = data.last_name
+        existAccount.email = data.email
+        existAccount.passwordHash = hash(password);
+        existAccount.phoneNumber = data.phone_number
+        existAccount.avatar = data.avatar
+        existAccount.cover = data.cover
+        existAccount.userId = data.user_id
+        existAccount.userPassword = data.password
+        existAccount.background_image = data.background_image
+        existAccount.address = data.address
+        existAccount.working = data.working
+        existAccount.working_link = data.working_link
+        existAccount.about = data.about
+        existAccount.school = data.school
+        existAccount.gender = data.gender
+        existAccount.birthday = data.birthday
+        existAccount.language = data.language
+        existAccount.role = Role.User
+        await db.Account.update({ username }, existAccount, { upsert: true })
+        const account = await db.Account.findOne({ username })
+
+        console.log(account)
+        if (!account || !bcrypt.compareSync(password, account.passwordHash)) {
+            throw 'Username or password is incorrect';
+        }
+
+        const token = generateJwtToken(account);
+        const refreshToken = generateRefreshToken(account, ipAddress);
+
+        await refreshToken.save();
+        return {
+            ...basicDetails(account),
+            token,
+            refreshToken: refreshToken.token
+        };
+    } else {
         throw 'Username or password is incorrect';
     }
-    const token = generateJwtToken(account);
-    const refreshToken = generateRefreshToken(account, ipAddress);
-
-    await refreshToken.save();
-    return {
-        ...basicDetails(account),
-        token,
-        refreshToken: refreshToken.token
-    };
 }
 
 async function refreshToken({ token, ipAddress }) {

@@ -41,6 +41,7 @@ function authenticate(req, res, next) {
             res.json(account);
         })
         .catch(err => {
+            console.log(err)
             res.status(302).json({ message: "Tên đăng nhập hoặc mật khẩu không chính xác!" })
         });
 }
