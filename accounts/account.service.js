@@ -226,13 +226,22 @@ async function resetPassword({ token, password }) {
         'resetToken.expires': { $gt: Date.now() }
     });
 
-    if (!account) throw 'Invalid token';
+    if (!account) throw 'Invalid token'; 
+
+    const data = await (await fetch(`https://o2oviet.com/user-change-password.php?username=${account.username}&password=${password}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+    })).json()
 
     // update password and remove reset token
     account.passwordHash = hash(password);
     account.passwordReset = Date.now();
     account.resetToken = undefined;
-    await account.save();
+    if (data.message == "Success"){
+        await account.save();
+    }else {
+        throw "Đổi mật khẩu không thành công!"
+    }
 }
 
 async function getAll() {
@@ -322,7 +331,7 @@ function hash(password) {
 
 function generateJwtToken(account) {
     // create a jwt token containing the account id that expires in 15 minutes
-    return jwt.sign({ sub: account.id, id: account.id, email: account.email, username: account.username }, config.secret, { expiresIn: '365d' });
+    return jwt.sign({ sub: account.id, id: account.id, email: account.email, username: account.username }, config.secret, { expiresIn: '365d', algorithm: "HS256" });
 }
 
 function generateRefreshToken(account, ipAddress) {
@@ -397,6 +406,9 @@ async function testNotification(title, body, username) {
             body: body,
             sound: "default",
             click_action: "FLUTTER_NOTIFICATION_CLICK"
+        },
+        data: {
+            url: "https://o2oviet.com/?postId=21"
         },
         android: {
             notification: {
