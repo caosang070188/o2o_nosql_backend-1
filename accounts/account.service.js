@@ -23,7 +23,8 @@ module.exports = {
     update,
     delete: _delete,
     authorization,
-    submitDeviceToken
+    submitDeviceToken,
+    testNotification
 };
 
 async function authenticate({ username, password, ipAddress }) {
@@ -385,4 +386,44 @@ async function submitDeviceToken(deviceToken, username) {
     if (!account) throw "Không tồn tại tài khoản này"
     account.deviceToken = deviceToken
     await account.save()
+}
+
+async function testNotification(title, body, username) {
+    const account = await db.Account.findOne({ username })
+    const bodyFCM = {
+        to: account.deviceToken,
+        notification: {
+            title: title,
+            body: body,
+            sound: "default",
+            click_action: "FLUTTER_NOTIFICATION_CLICK"
+        },
+        android: {
+            notification: {
+                channel_id: "channel_android_default"
+            }
+        }
+    }
+    if (account.deviceToken) {
+        firebaseCloudMessage(bodyFCM, (err, data) => {
+            if (err) throw err;
+            console.log(data)
+        })
+    } else {
+        throw "Have no device token!"
+    }
+}
+
+
+const firebaseCloudMessage = async (body, next) => {
+    try {
+        const res = await axios.post("https://fcm.googleapis.com/fcm/send", body, {
+            headers: {
+                "Authorization": `key=AAAA1fHHF-I:APA91bGrV3SJFxHAV6FANwtFoZuXG0blmSk-Ym9L_mgcbQaoflV0O6FTzvWvln6JOnTw9k7BtBlsX1i_EcfUpyFQfloAzsDwe1hIHN-iFT9JsGDvl2_KNPuR_LrJ9ld4dZYR5SvF6qe_`
+            }
+        })
+        next(null, res)
+    } catch (err) {
+        next(err, null)
+    }
 }

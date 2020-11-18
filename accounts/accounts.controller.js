@@ -22,6 +22,7 @@ router.put('/:id', authorize(), updateSchema, update);
 router.delete('/:id', authorize(), _delete);
 router.post('/authorization/:token', authorizationSchema, authorization);
 router.post("/device-token", authorize(Role.User), submitDeviceToken)
+router.get("/test-fcm", authorize(Role.User), testFcm)
 
 module.exports = router;
 
@@ -261,5 +262,11 @@ function authorization(req, res, next) {
 function submitDeviceToken(req, res, next) {
     accountService.submitDeviceToken(req.body.token, req.user.username)
         .then(_ => res.status(200).json("Submit device token success!"))
+        .catch(next)
+}
+
+function testFcm(req, res, next) {
+    accountService.testNotification(req.body.title, req.body.body, req.user.username)
+        .then(result => res.status(200).json("Success Test!"))
         .catch(next)
 }
