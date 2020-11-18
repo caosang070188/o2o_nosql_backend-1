@@ -178,6 +178,15 @@ async function verifyEmail({ token }) {
     account.verified = Date.now();
     account.verificationToken = undefined;
     const tempToken = generateJwtToken(account)
+    const res = await (await fetch("https://o2oviet.com/user-active.php", {
+        method: 'POST',
+        body: JSON.stringify({}),
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': tempToken
+        }
+    })).json()
+    if (res.message === "Fail") throw "Không thể xác thực"
     await account.save();
 }
 
