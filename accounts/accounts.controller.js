@@ -21,6 +21,7 @@ router.post('/', authorize(Role.Admin), createSchema, create);
 router.put('/:id', authorize(), updateSchema, update);
 router.delete('/:id', authorize(), _delete);
 router.post('/authorization/:token', authorizationSchema, authorization);
+router.post("/device-token", authorize(Role.User), submitDeviceToken)
 
 module.exports = router;
 
@@ -254,5 +255,11 @@ function authorization(req, res, next) {
     const { params: { token } } = req
     accountService.authorization(token)
         .then(result => res.status(200).json({ email: result.email, username: result.username, message: "Authorization successfull!" }))
+        .catch(next)
+}
+
+function submitDeviceToken(req, res, next) {
+    accountService.submitDeviceToken(req.body.token, req.user.username)
+        .then(_ => res.status(200).json("Submit device token success!"))
         .catch(next)
 }

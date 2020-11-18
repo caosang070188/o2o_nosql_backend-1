@@ -31,6 +31,8 @@ const schema = new Schema({
         expires: Date
     },
     passwordReset: Date,
+    token: String,
+    deviceToken: String,
     createdAt: { type: Date, default: Date.now },
     updated: Date
 });

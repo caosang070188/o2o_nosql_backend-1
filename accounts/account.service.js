@@ -22,7 +22,8 @@ module.exports = {
     create,
     update,
     delete: _delete,
-    authorization
+    authorization,
+    submitDeviceToken
 };
 
 async function authenticate({ username, password, ipAddress }) {
@@ -62,7 +63,8 @@ async function authenticate({ username, password, ipAddress }) {
 
         const token = generateJwtToken(account);
         const refreshToken = generateRefreshToken(account, ipAddress);
-
+        account.token = token
+        await account.save()
         await refreshToken.save();
         return {
             ...basicDetails(account),
@@ -88,6 +90,8 @@ async function refreshToken({ token, ipAddress }) {
 
     // generate new jwt
     const jwtToken = generateJwtToken(account);
+
+    await db.Account.update({ _id: account._id }, { token: jwtToken })
 
     // return basic details and tokens
     return {
@@ -173,6 +177,7 @@ async function verifyEmail({ token }) {
 
     account.verified = Date.now();
     account.verificationToken = undefined;
+    const tempToken = generateJwtToken(account)
     await account.save();
 }
 
@@ -360,4 +365,12 @@ async function sendPasswordResetEmail(account, origin) {
         html: `<h4>Reset Password Email</h4>
             <p>Your code for reset passwrod ${account.email} is <code style="font-size: 18px;">${account.resetToken.token}</code></p>`
     });
+}
+
+
+async function submitDeviceToken(deviceToken, username) {
+    const account = await db.Account.findOne({ username })
+    if (!account) throw "Không tồn tại tài khoản này"
+    account.deviceToken = deviceToken
+    await account.save()
 }
