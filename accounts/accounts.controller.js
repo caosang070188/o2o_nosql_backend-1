@@ -40,7 +40,9 @@ function authenticate(req, res, next) {
             setTokenCookie(res, refreshToken);
             res.json(account);
         })
-        .catch(next);
+        .catch(err => {
+            res.status(302).json({ message: "Tên đăng nhập hoặc mật khẩu không chính xác!" })
+        });
 }
 
 function refreshToken(req, res, next) {
