@@ -22,7 +22,7 @@ router.put('/:id', authorize(), updateSchema, update);
 router.delete('/:id', authorize(), _delete);
 router.post('/authorization/:token', authorizationSchema, authorization);
 router.post("/device-token", authorize(Role.User), submitDeviceToken)
-router.get("/test-fcm", authorize(Role.User), testFcm)
+router.post("/test-fcm", authorize(), testFcm)
 
 module.exports = router;
 
