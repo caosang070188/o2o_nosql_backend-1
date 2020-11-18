@@ -223,6 +223,12 @@ paths:
                 confirmPassword:
                   type: string
                   example: "123456@sang"
+                gender:
+                  type: string
+                  example: "male"
+                phoneNumber:
+                  type: string
+                  example: "09181867773"
                 acceptTerms:
                   type: boolean
               required:
@@ -232,6 +238,8 @@ paths:
                 - email
                 - password
                 - confirmPassword
+                - phoneNumber
+                - gender
                 - acceptTerms
       responses:
         "200":
@@ -464,6 +472,12 @@ paths:
                 confirmPassword:
                   type: string
                   example: "123456@sang"
+                gender:
+                  type: string
+                  example: "male"
+                phoneNumber:
+                  type: string
+                  example: "09181867773"
                 role:
                   type: string
                   enum: [Admin, User]
@@ -474,6 +488,8 @@ paths:
                 - email
                 - password
                 - confirmPassword
+                - gender
+                - phoneNumber
                 - role
       responses:
         "200":
@@ -589,15 +605,18 @@ paths:
                 lastName:
                   type: string
                   example: "Watmore"
-                username:
-                  type: string
-                  example: "caosang"
                 password:
                   type: string
                   example: "123456@sang"
                 confirmPassword:
                   type: string
                   example: "123456@sang"
+                gender:
+                  type: string
+                  example: "male"
+                phoneNumber:
+                  type: string
+                  example: "09181867773"
                 role:
                   type: string
                   enum: [Admin, User]

@@ -92,9 +92,20 @@ async function revokeToken({ token, ipAddress }) {
 }
 
 async function register(params, origin) {
-    // validate
-    const res = await axios.get(`https://o2oviet.com/user-check-register.php?username=${params.username}&password=${params.password}`),
+    const res = await axios.post("https://o2oviet.com/user.php", {
+        username: params.username,
+        password: params.password,
+        email: params.email,
+        first_name: params.firstName,
+        last_name: params.lastName,
+        phone_number: params.phoneNumber,
+        gender: params.gender
+    }),
         { data } = res
+
+    if (res.status === 404) throw "Email or username was used!"
+    // const res = await axios.get(`https://o2oviet.com/user-check-register.php?username=${params.username}&password=${params.password}`),
+    //     { data } = res
     if (await db.Account.findOne({ username: params.username })) {
         // send already registered error in email to prevent account enumeration
         const tempUser = await db.Account.findOne({ username: params.username })
