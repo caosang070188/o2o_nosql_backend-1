@@ -6,6 +6,7 @@ const sendEmail = require('_helpers/send-email');
 const db = require('_helpers/db');
 const Role = require('_helpers/role');
 const axios = require("axios");
+const fetch = require('node-fetch');
 
 module.exports = {
     authenticate,
@@ -106,55 +107,60 @@ async function revokeToken({ token, ipAddress }) {
 }
 
 async function register(params, origin) {
-    const res = await axios.post("https://o2oviet.com/user.php", {
-        username: params.username,
-        password: params.password,
-        email: params.email,
-        first_name: params.firstName,
-        last_name: params.lastName,
-        phone_number: params.phoneNumber,
-        gender: params.gender
-    }),
-        { data } = res
+    fetch("https://o2oviet.com/user.php", {
+        method: 'POST',
+        body: JSON.stringify({
+            username: params.username,
+            password: params.password,
+            email: params.email,
+            first_name: params.firstName,
+            last_name: params.lastName,
+            phone_number: params.phoneNumber,
+            gender: params.gender
+        }),
+        headers: { 'Content-Type': 'application/json' }
+    }).then(res => res.json())
+        .then(async data => {
+            if (data.message === "Email or username was used!") throw "Email or username was used!"
+            if (await db.Account.findOne({ username: params.username })) {
+                // send already registered error in email to prevent account enumeration
+                const tempUser = await db.Account.findOne({ username: params.username })
+                return await sendAlreadyRegisteredEmail(tempUser.email, origin);
+            }
 
-    if (res.status === 404) throw "Email or username was used!"
-    // const res = await axios.get(`https://o2oviet.com/user-check-register.php?username=${params.username}&password=${params.password}`),
-    //     { data } = res
-    if (await db.Account.findOne({ username: params.username })) {
-        // send already registered error in email to prevent account enumeration
-        const tempUser = await db.Account.findOne({ username: params.username })
-        return await sendAlreadyRegisteredEmail(tempUser.email, origin);
-    }
 
+            // create account object
+            const account = new db.Account(params);
 
-    // create account object
-    const account = new db.Account(params);
+            account.avatar = data.avatar
+            account.cover = data.cover
+            account.userId = data.user_id
+            account.userPassword = data.password
+            account.background_image = data.background_image
+            account.address = data.address
+            account.working = data.working
+            account.working_link = data.working_link
+            account.about = data.about
+            account.school = data.school
+            account.gender = data.gender
+            account.birthday = data.birthday
+            account.language = data.language
+            // first registered account is an admin
+            account.role = Role.User;
+            account.verificationToken = randomTokenString();
 
-    account.avatar = data.avatar
-    account.cover = data.cover
-    account.userId = data.user_id
-    account.userPassword = data.password
-    account.background_image = data.background_image
-    account.address = data.address
-    account.working = data.working
-    account.working_link = data.working_link
-    account.about = data.about
-    account.school = data.school
-    account.gender = data.gender
-    account.birthday = data.birthday
-    account.language = data.language
-    // first registered account is an admin
-    account.role = Role.User;
-    account.verificationToken = randomTokenString();
+            // hash password
+            account.passwordHash = hash(params.password);
 
-    // hash password
-    account.passwordHash = hash(params.password);
+            // save account
+            await account.save();
 
-    // save account
-    await account.save();
-
-    // send email
-    await sendVerificationEmail(account, origin);
+            // send email
+            await sendVerificationEmail(account, origin);
+        })
+        .catch(err => {
+            throw err
+        })
 }
 
 async function verifyEmail({ token }) {

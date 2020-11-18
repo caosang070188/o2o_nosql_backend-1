@@ -83,7 +83,7 @@ function revokeToken(req, res, next) {
 
 function registerSchema(req, res, next) {
     const schema = Joi.object({
-        title: Joi.string(),
+        title: Joi.string().optional(),
         firstName: Joi.string().required(),
         lastName: Joi.string().required(),
         username: Joi.string().required(),
