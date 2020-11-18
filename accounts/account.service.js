@@ -186,8 +186,11 @@ async function verifyEmail({ token }) {
             'Authorization': tempToken
         }
     })).json()
-    if (res.message === "Fail") throw "Không thể xác thực"
-    await account.save();
+    if (res.message == "Success") {
+        await account.save();
+    } else {
+        throw "Không thể xác thực"
+    }
 }
 
 async function forgotPassword({ email }, origin) {
