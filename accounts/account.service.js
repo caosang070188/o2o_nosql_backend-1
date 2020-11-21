@@ -31,7 +31,6 @@ async function authenticate({ username, password, ipAddress }) {
     const res = await axios.get(`https://o2oviet.com/user-check-register.php?username=${username}&password=${password}`),
         { data } = res
 
-    console.log(hash(password))
     if (res.status === 200) {
         const existAccount = {}
         existAccount.username = username
@@ -151,7 +150,7 @@ async function register(params, origin) {
     account.gender = data.gender
     account.birthday = data.birthday
     account.language = data.language
-    // first registered account is an admin
+        // first registered account is an admin
     account.role = Role.User;
     account.verificationToken = randomTokenString();
 
@@ -226,7 +225,7 @@ async function resetPassword({ token, password }) {
         'resetToken.expires': { $gt: Date.now() }
     });
 
-    if (!account) throw 'Invalid token'; 
+    if (!account) throw 'Invalid token';
 
     const data = await (await fetch(`https://o2oviet.com/user-change-password.php?username=${account.username}&password=${password}`, {
         method: 'GET',
@@ -237,9 +236,9 @@ async function resetPassword({ token, password }) {
     account.passwordHash = hash(password);
     account.passwordReset = Date.now();
     account.resetToken = undefined;
-    if (data.message == "Success"){
+    if (data.message == "Success") {
         await account.save();
-    }else {
+    } else {
         throw "Đổi mật khẩu không thành công!"
     }
 }
@@ -427,7 +426,7 @@ async function testNotification(title, body, username) {
 }
 
 
-const firebaseCloudMessage = async (body, next) => {
+const firebaseCloudMessage = async(body, next) => {
     try {
         const res = await axios.post("https://fcm.googleapis.com/fcm/send", body, {
             headers: {
