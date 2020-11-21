@@ -24,6 +24,12 @@ router.post('/authorization/:token', authorizationSchema, authorization);
 router.post("/device-token", authorize(Role.User), submitDeviceToken)
 router.post("/test-fcm", authorize(), testFcm)
 
+
+router.post("/notification", (req, res, next) => {
+    const { query: { username, sql } } = req
+    res.status(200).json("Success!")
+})
+
 module.exports = router;
 
 function authenticateSchema(req, res, next) {
