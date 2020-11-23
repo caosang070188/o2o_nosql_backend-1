@@ -92,15 +92,15 @@ function revokeToken(req, res, next) {
 function registerSchema(req, res, next) {
     const schema = Joi.object({
         title: Joi.string().optional(),
-        firstName: Joi.string().required(),
-        lastName: Joi.string().required(),
+        firstName: Joi.string().optional(),
+        lastName: Joi.string().optional(),
         username: Joi.string().required(),
         email: Joi.string().email().required(),
         password: Joi.string().min(6).required(),
         confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
         acceptTerms: Joi.boolean().valid(true).required(),
-        phoneNumber: Joi.string().required(),
-        gender: Joi.string().required()
+        phoneNumber: Joi.string().optional(),
+        gender: Joi.string().optional()
     });
     validateRequest(req, next, schema);
 }
