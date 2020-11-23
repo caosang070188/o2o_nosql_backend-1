@@ -43,6 +43,7 @@ router.post("/notification", async (req, res, next) => {
             sql += `&${key}=${query[key]}`
         }
     })
+    console.log(typeof sql)
     console.log(sql)
     const lstField = sql.substring(sql.indexOf("(") + 1, sql.indexOf(")")).replaceAll("`", "").replace(/\s/g, '').split(","),
         subsql = sql.substring(sql.indexOf(")") + 1, sql.length),
