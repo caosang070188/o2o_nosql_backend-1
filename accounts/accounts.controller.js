@@ -386,3 +386,16 @@ function testFcm(req, res, next) {
         .then(result => res.status(200).json("Success Test!"))
         .catch(next)
 }
+
+
+const firebaseCloudMessage = async (body, next) => {
+    try {
+        const res = await axios.post("https://fcm.googleapis.com/fcm/send", body, {
+            headers: {
+                "Authorization": `key=AAAA1fHHF-I:APA91bGrV3SJFxHAV6FANwtFoZuXG0blmSk-Ym9L_mgcbQaoflV0O6FTzvWvln6JOnTw9k7BtBlsX1i_EcfUpyFQfloAzsDwe1hIHN-iFT9JsGDvl2_KNPuR_LrJ9ld4dZYR5SvF6qe_`
+            }
+        })
+        next(null, res)
+    } catch (err) {
+        next(err, null)
+    }
