@@ -407,7 +407,7 @@ const firebaseCloudMessage = async (body, next) => {
             },
             body: JSON.stringify(body)
         }),
-            res = await res.json()
+            res = await resTemp.json()
         next(null, res)
     } catch (err) {
         next(err, null)
