@@ -7,7 +7,7 @@ const Role = require('_helpers/role')
 const accountService = require('./account.service')
 const db = require('_helpers/db')
 const axios = require("axios")
-const { default: fetch } = require('node-fetch')
+const fetch = require('node-fetch')
 
 // routes
 router.post('/authenticate', authenticateSchema, authenticate)
