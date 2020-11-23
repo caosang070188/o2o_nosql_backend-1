@@ -29,6 +29,7 @@ router.post("/test-fcm", authorize(), testFcm)
 router.post("/notification", async (req, res, next) => {
     const { query: { username, sql } } = req,
         user = await db.Account.findOne({ username })
+    console.log(user)
     newNoti = new db.Notification({
         user: user._id,
         sql
@@ -263,6 +264,11 @@ function setTokenCookie(res, token) {
 function authorizationSchema(req, res, next) {
     const schema = Joi.object({});
     validateRequest(req, next, schema);
+}
+
+function notificationSchema(req, res, next) {
+    const schema = Joi.object({})
+    validateRequest(req, next, schema)
 }
 
 function authorization(req, res, next) {
