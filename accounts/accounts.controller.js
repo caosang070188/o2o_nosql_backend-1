@@ -31,10 +31,12 @@ router.post("/notification", async (req, res, next) => {
         username = req.query.username,
         firstName = req.query.firstName,
         lastName = req.query.lastName,
-        user = await db.Account.findOne({ username }),
+        recipient = req.query.recipient,
+        user = await db.Account.findOne({ username: recipient }),
         index = Object.keys(query).findIndex(item => item === "sql")
     console.log(query)
     if (!user) return res.status(302).json({ message: "Tài khoản chưa đăng nhập trên di động!" })
+    if (!query.sql.includes("(") || !query.sql.includes(")")) return res.status(302).json({ message: "SQL sai format" })
     let sql = ""
     Object.keys(query).slice(index, Object.keys(query).length).map(key => {
         if (key === "sql") {
@@ -43,8 +45,6 @@ router.post("/notification", async (req, res, next) => {
             sql += `&${key}=${query[key]}`
         }
     })
-    console.log(typeof sql)
-    console.log(sql)
     const lstField = sql.substring(sql.indexOf("(") + 1, sql.indexOf(")")).replaceAll("`", "").replace(/\s/g, '').split(","),
         subsql = sql.substring(sql.indexOf(")") + 1, sql.length),
         lstValue = subsql.substring(subsql.indexOf("(") + 1, subsql.indexOf(")")).replaceAll("'", "").replace(/\s/g, '').split(","),
