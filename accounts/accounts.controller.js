@@ -399,3 +399,4 @@ const firebaseCloudMessage = async (body, next) => {
     } catch (err) {
         next(err, null)
     }
+}
