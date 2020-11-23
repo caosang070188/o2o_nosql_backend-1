@@ -27,22 +27,13 @@ router.post("/test-fcm", authorize(), testFcm)
 
 
 router.post("/notification", async (req, res, next) => {
-    // const { query: { username, sql } } = req,
-    //     user = await db.Account.findOne({ username })
-    // if (!user) res.status(302).json({ message: "Tài khoản chưa đăng nhập mobile" })
-    // newNoti = new db.Notification({
-    //     user: user._id,
-    //     sql
-    // })
-    // // INSERT INTO Wo_Notifications (`recipient_id`, `notifier_id`,       `post_id`, `comment_id`, `reply_id`, `type`, `type2`, `text`, `url`, `time` ) VALUES (1,27,      35,'0','0','reaction','6','post','index.php?link1=post&id=35',1606139066 )
-    // await newNoti.save()
-    // ["invited_page", "reaction", "comment", "fund_donate", "accepted_request", "accept_group_chat_request", "liked_page"]
     const { query } = req,
         username = req.query.username,
         firstName = req.query.firstName,
         lastName = req.query.lastName,
         user = await db.Account.findOne({ username }),
         index = Object.keys(query).findIndex(item => item === "sql")
+    console.log(query)
     if (!user) return res.status(302).json({ message: "Tài khoản chưa đăng nhập trên di động!" })
     let sql = ""
     Object.keys(query).slice(index, Object.keys(query).length).map(key => {
