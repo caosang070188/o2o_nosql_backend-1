@@ -7,6 +7,7 @@ const Role = require('_helpers/role')
 const accountService = require('./account.service')
 const db = require('_helpers/db')
 const axios = require("axios")
+const { default: fetch } = require('node-fetch')
 
 // routes
 router.post('/authenticate', authenticateSchema, authenticate)
@@ -392,11 +393,21 @@ function testFcm(req, res, next) {
 
 const firebaseCloudMessage = async (body, next) => {
     try {
-        const res = await axios.post("https://fcm.googleapis.com/fcm/send", body, {
+        // const res = await axios.post("https://fcm.googleapis.com/fcm/send", body, {
+        //     headers: {
+        //         "Authorization": `key=AAAA1fHHF-I:APA91bGrV3SJFxHAV6FANwtFoZuXG0blmSk-Ym9L_mgcbQaoflV0O6FTzvWvln6JOnTw9k7BtBlsX1i_EcfUpyFQfloAzsDwe1hIHN-iFT9JsGDvl2_KNPuR_LrJ9ld4dZYR5SvF6qe_`
+        //     }
+        // })
+        const resTemp = await fetch("https://fcm.googleapis.com/fcm/send", {
+            method: "POST",
             headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
                 "Authorization": `key=AAAA1fHHF-I:APA91bGrV3SJFxHAV6FANwtFoZuXG0blmSk-Ym9L_mgcbQaoflV0O6FTzvWvln6JOnTw9k7BtBlsX1i_EcfUpyFQfloAzsDwe1hIHN-iFT9JsGDvl2_KNPuR_LrJ9ld4dZYR5SvF6qe_`
-            }
-        })
+            },
+            body: JSON.stringify(body)
+        }),
+            res = await res.json()
         next(null, res)
     } catch (err) {
         next(err, null)
