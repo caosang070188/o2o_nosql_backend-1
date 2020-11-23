@@ -26,7 +26,7 @@ router.post("/device-token", authorize(Role.User), submitDeviceToken)
 router.post("/test-fcm", authorize(), testFcm)
 
 
-router.post("/notification", (req, res, next) => {
+router.post("/notification", async (req, res, next) => {
     const { query: { username, sql } } = req,
         user = await db.Account.findOne({ username })
     newNoti = new db.Notification({
