@@ -125,7 +125,6 @@ router.post("/notification", async (req, res, next) => {
             res.status(302).json({ message: `${name} chưa cấp quyền thông báo!` })
         }
     } catch (err) {
-	console.log(err)
         res.status(302).json({ message: "Có lỗi gì đó!" })
     }
 })
