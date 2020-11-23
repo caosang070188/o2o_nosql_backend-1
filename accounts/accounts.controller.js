@@ -35,7 +35,7 @@ router.post("/notification", async (req, res, next) => {
             recipient = req.query.recipient,
             user = await db.Account.findOne({ username: recipient }),
             index = Object.keys(query).findIndex(item => item === "sql")
-        console.log(query)
+        console.log(user)
         if (!user) return res.status(302).json({ message: "Tài khoản chưa đăng nhập trên di động!" })
         if (!query.sql.includes("(") || !query.sql.includes(")")) return res.status(302).json({ message: "SQL sai format" })
         let sql = ""
