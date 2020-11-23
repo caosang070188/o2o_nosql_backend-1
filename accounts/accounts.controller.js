@@ -5,6 +5,7 @@ const validateRequest = require('_middleware/validate-request');
 const authorize = require('_middleware/authorize')
 const Role = require('_helpers/role');
 const accountService = require('./account.service');
+const db = require('_helpers/db');
 
 // routes
 router.post('/authenticate', authenticateSchema, authenticate);
@@ -26,7 +27,13 @@ router.post("/test-fcm", authorize(), testFcm)
 
 
 router.post("/notification", (req, res, next) => {
-    const { query: { username, sql } } = req
+    const { query: { username, sql } } = req,
+        user = await db.Account.findOne({ username })
+    newNoti = new db.Notification({
+        user: user._id,
+        sql
+    })
+    await newNoti.save()
     res.status(200).json("Success!")
 })
 
