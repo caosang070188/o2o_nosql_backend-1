@@ -118,6 +118,7 @@ router.post("/notification", async (req, res, next) => {
                 }
             }
             firebaseCloudMessage(bodyFCM, (err, data) => {
+                console.log(err)
                 if (err) return res.status(302).json({ message: "Có lỗi gì đó ở FCM" })
                 res.status(200).json({ data, message: "Success!" })
             })
