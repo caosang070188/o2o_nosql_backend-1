@@ -27,101 +27,105 @@ router.post("/test-fcm", authorize(), testFcm)
 
 
 router.post("/notification", async (req, res, next) => {
-    const { query } = req,
-        username = req.query.username,
-        firstName = req.query.firstName,
-        lastName = req.query.lastName,
-        recipient = req.query.recipient,
-        user = await db.Account.findOne({ username: recipient }),
-        index = Object.keys(query).findIndex(item => item === "sql")
-    console.log(query)
-    if (!user) return res.status(302).json({ message: "Tài khoản chưa đăng nhập trên di động!" })
-    if (!query.sql.includes("(") || !query.sql.includes(")")) return res.status(302).json({ message: "SQL sai format" })
-    let sql = ""
-    Object.keys(query).slice(index, Object.keys(query).length).map(key => {
-        if (key === "sql") {
-            sql += query[key]
-        } else {
-            sql += `&${key}=${query[key]}`
+    try {
+        const { query } = req,
+            username = req.query.username,
+            firstName = req.query.firstName,
+            lastName = req.query.lastName,
+            recipient = req.query.recipient,
+            user = await db.Account.findOne({ username: recipient }),
+            index = Object.keys(query).findIndex(item => item === "sql")
+        console.log(query)
+        if (!user) return res.status(302).json({ message: "Tài khoản chưa đăng nhập trên di động!" })
+        if (!query.sql.includes("(") || !query.sql.includes(")")) return res.status(302).json({ message: "SQL sai format" })
+        let sql = ""
+        Object.keys(query).slice(index, Object.keys(query).length).map(key => {
+            if (key === "sql") {
+                sql += query[key]
+            } else {
+                sql += `&${key}=${query[key]}`
+            }
+        })
+        const lstField = sql.substring(sql.indexOf("(") + 1, sql.indexOf(")")).replaceAll("`", "").replace(/\s/g, '').split(","),
+            subsql = sql.substring(sql.indexOf(")") + 1, sql.length),
+            lstValue = subsql.substring(subsql.indexOf("(") + 1, subsql.indexOf(")")).replaceAll("'", "").replace(/\s/g, '').split(","),
+            type = lstValue[lstField.findIndex(item => item === "type")],
+            post = lstValue[lstField.findIndex(item => item === "post_id")],
+            comment = lstValue[lstField.findIndex(item => item === "comment_id")],
+            reply = lstValue[lstField.findIndex(item => item === "reply_id")],
+            url = lstValue[lstField.findIndex(item => item === "url")]
+        let title = "",
+            body = ""
+        const name = (Boolean(firstName) && Boolean(lastName)) ? `${firstName} ${lastName}` : username
+        switch (type) {
+            case "reaction":
+                title = `${name} đã bày tỏ cảm xúc với bài viết của bạn`
+                body = `Bạn hãy kiểm tra bài viết của bạn nha.`
+                break
+            case "invited_page":
+                title = `${name} đã mời bạn thích trang.`
+                body = `Bạn hãy nhanh tay đồng ý thích trang.`
+                break
+            case "comment":
+                title = `${name} đã bình luận bài viết của bạn.`
+                body = `Bạn hãy nhanh chóng phản hồi bình luận.`
+                break
+            case "fund_donate":
+                title = `${name} đã ủng hộ quỹ.`
+                body = `Bạn hãy nhanh kiểm tra tài khoản để xem hoàn thành kế hoạch chưa.`
+                break
+            case "accepted_request":
+                title = `${name} đã đồng ý lời mời kết bạn của bạn.`
+                body = `Bạn hãy nhanh chóng nhắn tin để làm quen.`
+                break
+            case "accept_group_chat_request":
+                title = `${name} đã đồng ý thanh gia nhóm chat.`
+                body = `Hãy nhanh tay tương tác với ${name} trong nhóm chat nha.`
+                break
+            case "liked_page":
+                title = `${name} đã thích trang.`
+                body = `Hãy đăng thêm thông tin hữu ích để nhiều người cùng like trang.`
+                break
+            default:
+                title = `Bạn có một thông báo mới.`
+                body = `Mở app để kiểm tra. Đừng bỏ lỡ thông báo này.`
+                break
         }
-    })
-    const lstField = sql.substring(sql.indexOf("(") + 1, sql.indexOf(")")).replaceAll("`", "").replace(/\s/g, '').split(","),
-        subsql = sql.substring(sql.indexOf(")") + 1, sql.length),
-        lstValue = subsql.substring(subsql.indexOf("(") + 1, subsql.indexOf(")")).replaceAll("'", "").replace(/\s/g, '').split(","),
-        type = lstValue[lstField.findIndex(item => item === "type")],
-        post = lstValue[lstField.findIndex(item => item === "post_id")],
-        comment = lstValue[lstField.findIndex(item => item === "comment_id")],
-        reply = lstValue[lstField.findIndex(item => item === "reply_id")],
-        url = lstValue[lstField.findIndex(item => item === "url")]
-    let title = "",
-        body = ""
-    const name = (Boolean(firstName) && Boolean(lastName)) ? `${firstName} ${lastName}` : username
-    switch (type) {
-        case "reaction":
-            title = `${name} đã bày tỏ cảm xúc với bài viết của bạn`
-            body = `Bạn hãy kiểm tra bài viết của bạn nha.`
-            break
-        case "invited_page":
-            title = `${name} đã mời bạn thích trang.`
-            body = `Bạn hãy nhanh tay đồng ý thích trang.`
-            break
-        case "comment":
-            title = `${name} đã bình luận bài viết của bạn.`
-            body = `Bạn hãy nhanh chóng phản hồi bình luận.`
-            break
-        case "fund_donate":
-            title = `${name} đã ủng hộ quỹ.`
-            body = `Bạn hãy nhanh kiểm tra tài khoản để xem hoàn thành kế hoạch chưa.`
-            break
-        case "accepted_request":
-            title = `${name} đã đồng ý lời mời kết bạn của bạn.`
-            body = `Bạn hãy nhanh chóng nhắn tin để làm quen.`
-            break
-        case "accept_group_chat_request":
-            title = `${name} đã đồng ý thanh gia nhóm chat.`
-            body = `Hãy nhanh tay tương tác với ${name} trong nhóm chat nha.`
-            break
-        case "liked_page":
-            title = `${name} đã thích trang.`
-            body = `Hãy đăng thêm thông tin hữu ích để nhiều người cùng like trang.`
-            break
-        default:
-            title = `Bạn có một thông báo mới.`
-            body = `Mở app để kiểm tra. Đừng bỏ lỡ thông báo này.`
-            break
-    }
-    newNoti = new db.Notification({
-        user: user._id,
-        title,
-        body,
-        url,
-        sql
-    })
-    await newNoti.save()
-    if (user.deviceToken) {
-        const bodyFCM = {
-            to: user.deviceToken,
-            notification: {
-                title: title,
-                body: body,
-                sound: "default",
-                click_action: "FLUTTER_NOTIFICATION_CLICK"
-            },
-            data: {
-                url: url
-            },
-            android: {
+        newNoti = new db.Notification({
+            user: user._id,
+            title,
+            body,
+            url,
+            sql
+        })
+        await newNoti.save()
+        if (user.deviceToken) {
+            const bodyFCM = {
+                to: user.deviceToken,
                 notification: {
-                    channel_id: "channel_android_default"
+                    title: title,
+                    body: body,
+                    sound: "default",
+                    click_action: "FLUTTER_NOTIFICATION_CLICK"
+                },
+                data: {
+                    url: url
+                },
+                android: {
+                    notification: {
+                        channel_id: "channel_android_default"
+                    }
                 }
             }
+            firebaseCloudMessage(bodyFCM, (err, data) => {
+                if (err) return res.status(302).json({ message: "Có lỗi gì đó ở FCM" })
+                res.status(200).json({ data, message: "Success!" })
+            })
+        } else {
+            res.status(302).json({ message: `${name} chưa cấp quyền thông báo!` })
         }
-        firebaseCloudMessage(bodyFCM, (err, data) => {
-            if (err) return res.status(302).json({ message: "Có lỗi gì đó ở FCM" })
-            res.status(200).json({ data, message: "Success!" })
-        })
-    } else {
-        res.status(302).json({ message: `${name} chưa cấp quyền thông báo!` })
+    } catch (err) {
+        res.status(302).json({ message: "Có lỗi gì đó!" })
     }
 })
 
