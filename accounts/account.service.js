@@ -126,7 +126,7 @@ async function register(params, origin) {
     })).json()
 
     console.log(data)
-    if (data.message === "Email or username was used!") throw "Email or username was used!"
+    if (data.message === "Email or username was used!") throw "Email or tên đăng nhập đã được sử dụng!"
     if (await db.Account.findOne({ username: params.username })) {
         // send already registered error in email to prevent account enumeration
         const tempUser = await db.Account.findOne({ username: params.username })
@@ -150,7 +150,7 @@ async function register(params, origin) {
     account.gender = data.gender
     account.birthday = data.birthday
     account.language = data.language
-        // first registered account is an admin
+    // first registered account is an admin
     account.role = Role.User;
     account.verificationToken = randomTokenString();
 
@@ -426,7 +426,7 @@ async function testNotification(title, body, username) {
 }
 
 
-const firebaseCloudMessage = async(body, next) => {
+const firebaseCloudMessage = async (body, next) => {
     try {
         const res = await axios.post("https://fcm.googleapis.com/fcm/send", body, {
             headers: {

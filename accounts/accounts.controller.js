@@ -85,7 +85,7 @@ function revokeToken(req, res, next) {
     const token = req.body.token || req.cookies.refreshToken;
     const ipAddress = req.ip;
 
-    if (!token) return res.status(400).json({ message: 'Token is required' });
+    if (!token) return res.status(400).json({ message: 'Bắt buộc phải có code nha bạn.' });
 
     // users can revoke their own tokens and admins can revoke any tokens
     if (!req.user.ownsToken(token) && req.user.role !== Role.Admin) {
@@ -93,7 +93,7 @@ function revokeToken(req, res, next) {
     }
 
     accountService.revokeToken({ token, ipAddress })
-        .then(() => res.json({ message: 'Token revoked' }))
+        .then(() => res.json({ message: 'Code đã được thu hồi.' }))
         .catch(next);
 }
 
@@ -115,8 +115,14 @@ function registerSchema(req, res, next) {
 
 function register(req, res, next) {
     accountService.register(req.body, req.get('origin'))
-        .then(() => res.json({ message: 'Registration successful, please check your email for verification instructions' }))
-        .catch(next);
+        .then(() => res.json({ message: 'Đăng kí thành công rồi. Bạn vui lòng kiểm tra email để xác thực tài khoản nha.' }))
+        .catch((err) => {
+            if (err === "Email or tên đăng nhập đã được sử dụng!") {
+                res.status(302).json({ message: err })
+            } else {
+                res.status(302).json({ message: "Có lỗi gì đó rồi. Bạn vui lòng kiểm tra lại giúp chúng tớ nha!" })
+            }
+        });
 }
 
 function verifyEmailSchema(req, res, next) {
@@ -128,7 +134,7 @@ function verifyEmailSchema(req, res, next) {
 
 function verifyEmail(req, res, next) {
     accountService.verifyEmail(req.body)
-        .then(() => res.json({ message: 'Verification successful, you can login now' }))
+        .then(() => res.json({ message: 'Xác thực thành công. Bây giờ bạn có thể đăng nhập rồi.' }))
         .catch(next);
 }
 
@@ -141,7 +147,7 @@ function forgotPasswordSchema(req, res, next) {
 
 function forgotPassword(req, res, next) {
     accountService.forgotPassword(req.body, req.get('origin'))
-        .then(() => res.json({ message: 'Please check your email for password reset instructions' }))
+        .then(() => res.json({ message: 'Bạn vui lòng kiểm tra email nha. Code đã được gửi tới email của bạn.' }))
         .catch(next);
 }
 
@@ -154,7 +160,7 @@ function validateResetTokenSchema(req, res, next) {
 
 function validateResetToken(req, res, next) {
     accountService.validateResetToken(req.body)
-        .then(() => res.json({ message: 'Token is valid' }))
+        .then(() => res.json({ message: 'Code đã hết hạn' }))
         .catch(next);
 }
 
@@ -169,7 +175,7 @@ function resetPasswordSchema(req, res, next) {
 
 function resetPassword(req, res, next) {
     accountService.resetPassword(req.body)
-        .then(() => res.json({ message: 'Password reset successful, you can now login' }))
+        .then(() => res.json({ message: 'Mật khẩu đã được thay đổi. Bây giờ bạn có thể đăng nhập rồi.' }))
         .catch(next);
 }
 
@@ -182,7 +188,7 @@ function getAll(req, res, next) {
 function getById(req, res, next) {
     // users can get their own account and admins can get any account
     if (req.params.id !== req.user.id && req.user.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized' });
+        return res.status(401).json({ message: 'Chưa được xác thực.' });
     }
 
     accountService.getById(req.params.id)
