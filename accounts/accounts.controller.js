@@ -29,11 +29,12 @@ router.post("/test-fcm", authorize(), testFcm)
 router.post("/notification", async (req, res, next) => {
     const { query: { username, sql } } = req,
         user = await db.Account.findOne({ username })
-    console.log(user)
+    if (!user) res.status(302).json({ message: "Tài khoản chưa đăng nhập mobile" })
     newNoti = new db.Notification({
         user: user._id,
         sql
     })
+    // INSERT INTO Wo_Notifications (`recipient_id`, `notifier_id`,       `post_id`, `comment_id`, `reply_id`, `type`, `type2`, `text`, `url`, `time` ) VALUES (1,27,      35,'0','0','reaction','6','post','index.php?link1=post&id=35',1606139066 )
     await newNoti.save()
     res.status(200).json("Success!")
 })
