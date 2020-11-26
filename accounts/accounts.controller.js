@@ -108,15 +108,14 @@ router.post("/notification", async (req, res, next) => {
                     title: title,
                     body: body,
                     sound: "default",
-                    click_action: "FLUTTER_NOTIFICATION_CLICK"
+                    click_action: "FLUTTER_NOTIFICATION_CLICK",
+                    content_available: true,
+                    priority: "high",
+                    importance: "max",
+                    android_channel_id: "channel_android_default"
                 },
                 data: {
                     url: url
-                },
-                android: {
-                    notification: {
-                        channel_id: "channel_android_default"
-                    }
                 }
             }
             firebaseCloudMessage(bodyFCM, (err, data) => {

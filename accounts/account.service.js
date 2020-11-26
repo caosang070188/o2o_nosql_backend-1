@@ -404,16 +404,15 @@ async function testNotification(title, body, username) {
             title: title,
             body: body,
             sound: "default",
-            click_action: "FLUTTER_NOTIFICATION_CLICK"
+            click_action: "FLUTTER_NOTIFICATION_CLICK",
+            content_available: true,
+            priority: "high",
+            importance: "max",
+            android_channel_id: "channel_android_default"
         },
         data: {
             url: "https://o2oviet.com/?postId=21"
         },
-        android: {
-            notification: {
-                channel_id: "channel_android_default"
-            }
-        }
     }
     if (account.deviceToken) {
         firebaseCloudMessage(bodyFCM, (err, data) => {
