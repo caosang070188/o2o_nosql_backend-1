@@ -30,11 +30,11 @@ router.post("/test-fcm", authorize(), testFcm)
 
 router.post("/notification", async (req, res, next) => {
     try {
-        const { query } = req,
-            username = req.query.username,
-            firstName = req.query.firstName,
-            lastName = req.query.lastName,
-            recipient = req.query.recipient,
+        const query = req.body,
+            username = query.username,
+            firstName = query.firstName,
+            lastName = query.lastName,
+            recipient = query.recipient,
             user = await db.Account.findOne({ username: recipient }),
             index = Object.keys(query).findIndex(item => item === "sql")
         console.log(user)
