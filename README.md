@@ -19,3 +19,9 @@
 #### 2.2.2. Services will handle function in once router.
 
 ### 2.3. Package: I think I used Joi is not popular package. You can read more about this package in https://www.npmjs.com/package/joi.
+
+## 3. Use mongo
+
+### 3.1. Connect mongodb: mongo
+### 3.2. Choice collection: use authorization
+### 3.3. Read document for more query in commandline
