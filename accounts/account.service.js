@@ -227,16 +227,27 @@ async function resetPassword({ token, password }) {
 
     if (!account) throw 'Invalid token';
 
-    const data = await (await fetch(`https://o2oviet.com/user-change-password.php?username=${account.username}&password=${password}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-    })).json()
+    // const data = await (await fetch(`http://localhost/user-change-password.php`, {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: {
+    //         username: account.username,
+    //         password: password
+    //     }
+    // })).json()
+
+    const data = await axios.post("http://localhost/user-change-password.php", {
+        username: account.username,
+        password: password
+    })
+
+    console.log(data)
 
     // update password and remove reset token
     account.passwordHash = hash(password);
     account.passwordReset = Date.now();
     account.resetToken = undefined;
-    if (data.message == "Success") {
+    if (data.data.message == "Success") {
         await account.save();
     } else {
         throw "Đổi mật khẩu không thành công!"
