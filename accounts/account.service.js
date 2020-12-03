@@ -236,12 +236,10 @@ async function resetPassword({ token, password }) {
     //     }
     // })).json()
 
-    const data = await axios.post("http://localhost/user-change-password.php", {
+    const data = await axios.post("http://o2oviet.com/user-change-password.php", {
         username: account.username,
         password: password
     })
-
-    console.log(data)
 
     // update password and remove reset token
     account.passwordHash = hash(password);

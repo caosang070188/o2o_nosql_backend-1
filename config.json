@@ -5,8 +5,8 @@
     "smtpOptions": {
         "service": "gmail",
         "auth": {
-            "user": "ben.o2o.development@gmail.com",
-            "pass": "Dung12345"
+            "user": "o2ovn.com@gmail.com",
+            "pass": "123456@sang"
         }
     }
 }
