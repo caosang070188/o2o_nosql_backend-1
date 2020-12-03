@@ -32,6 +32,7 @@ async function authenticate({ username, password, ipAddress }) {
         { data } = res
 
     if (res.status === 200) {
+console.log(data)
         const existAccount = {}
         existAccount.username = username
         existAccount.firstName = data.first_name

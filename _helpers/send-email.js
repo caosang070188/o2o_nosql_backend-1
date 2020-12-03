@@ -10,5 +10,6 @@ async function sendEmail({ to, subject, html, from = config.emailFrom }) {
         console.log("Send email success!")
     } catch (err) {
         console.log("Error")
+	console.log(err)
     }
 }
