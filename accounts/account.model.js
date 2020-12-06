@@ -34,7 +34,8 @@ const schema = new Schema({
     token: String,
     deviceToken: String,
     createdAt: { type: Date, default: Date.now },
-    updated: Date
+    updated: Date,
+    chat_access_token: String
 });
 
 schema.virtual('isVerified').get(function () {

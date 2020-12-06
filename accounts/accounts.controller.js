@@ -6,7 +6,6 @@ const authorize = require('_middleware/authorize')
 const Role = require('_helpers/role')
 const accountService = require('./account.service')
 const db = require('_helpers/db')
-const axios = require("axios")
 const fetch = require('node-fetch')
 
 // routes
@@ -136,15 +135,16 @@ module.exports = router
 function authenticateSchema(req, res, next) {
     const schema = Joi.object({
         username: Joi.string().required(),
-        password: Joi.string().required()
+        password: Joi.string().required(),
+        isSynchroChatUser: Joi.boolean().default(true)
     })
     validateRequest(req, next, schema)
 }
 
 function authenticate(req, res, next) {
-    const { username, password } = req.body
+    const { username, password, isSynchroChatUser } = req.body
     const ipAddress = req.ip
-    accountService.authenticate({ username, password, ipAddress })
+    accountService.authenticate({ username, password, ipAddress, isSynchroChatUser })
         .then(({ refreshToken, ...account }) => {
             setTokenCookie(res, refreshToken)
             res.json(account)
@@ -201,7 +201,8 @@ function registerSchema(req, res, next) {
         confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
         acceptTerms: Joi.boolean().valid(true).required(),
         phoneNumber: Joi.string().optional(),
-        gender: Joi.string().optional()
+        gender: Joi.string().optional(),
+        isSynchroChatUser: Joi.boolean().default(true)
     })
     validateRequest(req, next, schema)
 }
@@ -374,7 +375,7 @@ function notificationSchema(req, res, next) {
 function authorization(req, res, next) {
     const { params: { token } } = req
     accountService.authorization(token)
-        .then(result => res.status(200).json({ email: result.email, username: result.username, message: "Authorization successfull!" }))
+        .then(result => res.status(200).json({ email: result.email, username: result.username,chat_access_token: result.chat_access_token, message: "Authorization successfull!" }))
         .catch(next)
 }
 

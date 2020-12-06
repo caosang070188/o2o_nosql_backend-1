@@ -8,12 +8,21 @@ const Role = require("_helpers/role");
 const axios = require("axios");
 const fetch = require("node-fetch");
 const Roles = require("../_helpers/role");
+const chatHandler = require("../chat/chat.handler");
+
+const {
+  changeChatUserPassword,
+  synchronizedChatUser,
+  updateChatUser,
+  authenticateChatAccessToken,
+} = chatHandler;
 
 module.exports = {
   authenticate,
   refreshToken,
   revokeToken,
   register,
+  registerWithoutSynchronizeChat,
   verifyEmail,
   forgotPassword,
   validateResetToken,
@@ -28,25 +37,7 @@ module.exports = {
   testNotification,
 };
 
-/**
- *
- * @param {{username:string, email:string, firstName:string, lastName: string, password: string, phone: string}} userData
- */
-
-async function synchronizedChatUser(userData) {
-  try {
-    const result = await axios({
-      method: "POST",
-      url: "http://localhost:3000/api/authenticate",
-      data: userData,
-    });
-    return result;
-  } catch (error) {
-    throw error;
-  }
-}
-
-async function authenticate({ username, password, ipAddress }) {
+async function authenticate({ username, password, ipAddress, isSynchroChatUser }) {
   const res = await axios.get(
       `https://o2oviet.com/user-check-register.php?username=${username}&password=${password}`
     ),
@@ -83,15 +74,14 @@ async function authenticate({ username, password, ipAddress }) {
     existAccount.language = data.language;
     existAccount.role = Role.User;
     await db.Account.update({ username }, existAccount, { upsert: true });
-    const register = await synchronizedChatUser({
+    const chatRegister = isSynchroChatUser ? await synchronizedChatUser({
       username,
       email,
       firstName: first_name,
       lastName: last_name,
       password,
       phone: phone_number,
-    });
-    console.log("register", register.status);
+    }) : null;
     const account = await db.Account.findOne({ username });
 
     console.log(account);
@@ -102,13 +92,22 @@ async function authenticate({ username, password, ipAddress }) {
     const token = generateJwtToken(account);
     const refreshToken = generateRefreshToken(account, ipAddress);
     account.token = token;
+    let chat_access_token = "";
+    if (chatRegister && chatRegister.data && chatRegister.data.access_token) {
+      account.chat_access_token = chatRegister.data.access_token;
+      chat_access_token = chatRegister.data.access_token;
+    }
     await account.save();
     await refreshToken.save();
-    return {
+    const result = {
       ...basicDetails(account),
       token,
       refreshToken: refreshToken.token,
     };
+    if (chat_access_token) {
+      result.chat_access_token = chat_access_token;
+    }
+    return result;
   } else {
     throw "Username or password is incorrect";
   }
@@ -149,6 +148,9 @@ async function revokeToken({ token, ipAddress }) {
 }
 
 async function register(params, origin) {
+  let { isSynchroChatUser, ...other } = params;
+  console.log('IS SYNCHROCHAT USER', isSynchroChatUser)
+  params = other;
   const data = await (
     await fetch("https://o2oviet.com/user.php", {
       method: "POST",
@@ -173,14 +175,16 @@ async function register(params, origin) {
   if (user) {
     // send already registered error in email to prevent account enumeration
     // const tempUser = await db.Account.findOne({ username: params.username });
-    await synchronizedChatUser({
-      username,
-      email,
-      firstName,
-      lastName,
-      password,
-      phone: phoneNumber,
-    });
+    if (isSynchroChatUser) {
+      await synchronizedChatUser({
+        username,
+        email,
+        firstName,
+        lastName,
+        password,
+        phone: phoneNumber,
+      });
+    }
     return await sendAlreadyRegisteredEmail(user.email, origin);
   }
 
@@ -218,14 +222,17 @@ async function register(params, origin) {
     phoneNumber,
     email,
   } = params;
-  const chatUser = await synchronizedChatUser({
-    username,
-    email,
-    firstName,
-    lastName,
-    password,
-    phone: phoneNumber,
-  });
+
+  if (isSynchroChatUser) {
+    const chatUser = await synchronizedChatUser({
+      username,
+      email,
+      firstName,
+      lastName,
+      password,
+      phone: phoneNumber,
+    });
+  }
 
   // send email
   await sendVerificationEmail(account, origin);
@@ -236,6 +243,64 @@ async function register(params, origin) {
   //     .catch(err => {
   //         throw err
   //     })
+}
+
+async function registerWithoutSynchronizeChat(params, origin) {
+  const data = await (
+    await fetch("https://o2oviet.com/user.php", {
+      method: "POST",
+      body: JSON.stringify({
+        username: params.username,
+        password: params.password,
+        email: params.email,
+        first_name: params.firstName,
+        last_name: params.lastName,
+        phone_number: params.phoneNumber,
+        gender: params.gender,
+      }),
+      headers: { "Content-Type": "application/json" },
+    })
+  ).json();
+
+  console.log(data);
+  if (data.message === "Email or username was used!") {
+    throw "Email or tên đăng nhập đã được sử dụng!";
+  }
+  const user = await db.Account.findOne({ username: params.username });
+  if (user) {
+    // send already registered error in email to prevent account enumeration
+    // const tempUser = await db.Account.findOne({ username: params.username });
+    return await sendAlreadyRegisteredEmail(user.email, origin);
+  }
+
+  // create account object
+  const account = new db.Account(params);
+
+  account.avatar = data.avatar;
+  account.cover = data.cover;
+  account.userId = data.user_id;
+  account.userPassword = data.password;
+  account.background_image = data.background_image;
+  account.address = data.address;
+  account.working = data.working;
+  account.working_link = data.working_link;
+  account.about = data.about;
+  account.school = data.school;
+  account.gender = data.gender;
+  account.birthday = data.birthday;
+  account.language = data.language;
+  // first registered account is an admin
+  account.role = Role.User;
+  account.verificationToken = randomTokenString();
+
+  // hash password
+  account.passwordHash = hash(params.password);
+
+  // save account
+  await account.save();
+
+  // send email
+  await sendVerificationEmail(account, origin);
 }
 
 async function verifyEmail({ token }) {
@@ -304,7 +369,6 @@ async function resetPassword({ token, password }) {
   //         password: password
   //     }
   // })).json()
-
   const data = await axios.post("http://o2oviet.com/user-change-password.php", {
     username: account.username,
     password: password,
@@ -316,6 +380,10 @@ async function resetPassword({ token, password }) {
   account.resetToken = undefined;
   if (data.data.message == "Success") {
     await account.save();
+    const chatUser = await changeChatUserPassword({
+      email: account.email,
+      newPassword: password,
+    });
   } else {
     throw "Đổi mật khẩu không thành công!";
   }
@@ -370,15 +438,25 @@ async function update(id, params) {
   ) {
     throw 'Email "' + params.email + '" is already taken';
   }
-
+  const chatUserUpdated = { ...params };
+  if (params.email) {
+    chatUserUpdated.newEmail = params.email;
+    chatUserUpdated.email = account.email;
+  }
   // hash password if it was entered
   if (params.password) {
     params.passwordHash = hash(params.password);
+    chatUserUpdated.newPassword = chatUserUpdated.password;
+    delete chatUserUpdated.password;
+    delete chatUserUpdated.confirmPassword;
   }
 
   // copy params to account and save
   Object.assign(account, params);
   account.updated = Date.now();
+
+  const chatUser = await updateChatUser(chatUserUpdated);
+
   await account.save();
 
   return basicDetails(account);
@@ -390,15 +468,25 @@ async function _delete(id) {
 }
 
 async function authorization(token) {
-  const { email } = jwt.decode(token),
-    account = await db.Account.findOne({ email });
-  if (!account) throw "Authorization fail!";
-  const verify = jwt.verify(token, config.secret);
-  if (!verify) throw "Authorization fail!";
-  return {
-    email: account.email,
-    username: account.username,
-  };
+  try {
+    const { email } = jwt.decode(token),
+      account = await db.Account.findOne({ email });
+    if (!account) throw "Authorization fail!";
+    const verify = jwt.verify(token, config.secret);
+    if (!verify) throw "Authorization fail!";
+
+    const chatAuth = await authenticateChatAccessToken(
+      account.chat_access_token
+    );
+    console.log("AUTH DATA", chatAuth.data);
+    return {
+      email: account.email,
+      username: account.username,
+      chat_access_token: chatAuth.data.token,
+    };
+  } catch (error) {
+    throw error;
+  }
 }
 
 // helper functions
@@ -472,6 +560,7 @@ function basicDetails(account) {
     gender,
     birthday,
     language,
+    // chat_access_token,
   } = account;
   return {
     id,
@@ -494,6 +583,7 @@ function basicDetails(account) {
     gender,
     birthday,
     language,
+    // chat_access_token,
   };
 }
 
