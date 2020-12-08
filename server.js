@@ -25,6 +25,9 @@ app.use("/accounts", require("./accounts/accounts.controller"));
 // swagger docs route
 app.use("/api-docs", require("_helpers/swagger"));
 
+// notification
+app.use('/notification', require('./notifications/wonotification.controller'));
+
 // global error handler
 app.use(errorHandler);
 
