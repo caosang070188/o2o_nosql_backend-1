@@ -56,22 +56,37 @@ async function updateChatUser(data) {
   }
 }
 
-async function authenticateChatAccessToken (token) {
-  try{
+async function authenticateChatAccessToken(token) {
+  try {
     const result = await axios({
-      method:"POST",
-      url:`${chatUrl}/authorization`,
-      data:{token}
-    })
+      method: "POST",
+      url: `${chatUrl}/authorization`,
+      data: { token },
+    });
     return result;
-  }catch(error){
+  } catch (error) {
     console.log("Error", error.response.data);
-    throw {message: error.response.data}
+    throw { message: error.response.data };
+  }
+}
+
+async function updateDeviceToken({ token, email }) {
+  try {
+    const result = await axios({
+      method: "POST",
+      url: `${chatUrl}/update-device-token`,
+      data: { token, email },
+    });
+    return result;
+  } catch (error) {
+    console.log("Update deviceToken chat user error", error.response.data);
+    throw { message: error.response.data };
   }
 }
 module.exports = {
   synchronizedChatUser,
   changeChatUserPassword,
   updateChatUser,
-  authenticateChatAccessToken
+  authenticateChatAccessToken,
+  updateDeviceToken,
 };

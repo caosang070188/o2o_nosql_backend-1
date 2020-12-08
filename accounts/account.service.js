@@ -37,7 +37,12 @@ module.exports = {
   testNotification,
 };
 
-async function authenticate({ username, password, ipAddress, isSynchroChatUser }) {
+async function authenticate({
+  username,
+  password,
+  ipAddress,
+  isSynchroChatUser,
+}) {
   const res = await axios.get(
       `https://o2oviet.com/user-check-register.php?username=${username}&password=${password}`
     ),
@@ -52,6 +57,7 @@ async function authenticate({ username, password, ipAddress, isSynchroChatUser }
       //   password,
       phone_number,
     } = data;
+    console.log("DATA", data);
     const existAccount = {};
     existAccount.username = username;
     existAccount.firstName = data.first_name;
@@ -74,14 +80,16 @@ async function authenticate({ username, password, ipAddress, isSynchroChatUser }
     existAccount.language = data.language;
     existAccount.role = Role.User;
     await db.Account.update({ username }, existAccount, { upsert: true });
-    const chatRegister = isSynchroChatUser ? await synchronizedChatUser({
-      username,
-      email,
-      firstName: first_name,
-      lastName: last_name,
-      password,
-      phone: phone_number,
-    }) : null;
+    const chatRegister = isSynchroChatUser
+      ? await synchronizedChatUser({
+          username,
+          email,
+          firstName: first_name,
+          lastName: last_name,
+          password,
+          phone: phone_number,
+        })
+      : null;
     const account = await db.Account.findOne({ username });
 
     console.log(account);
@@ -149,7 +157,7 @@ async function revokeToken({ token, ipAddress }) {
 
 async function register(params, origin) {
   let { isSynchroChatUser, ...other } = params;
-  console.log('IS SYNCHROCHAT USER', isSynchroChatUser)
+  console.log("IS SYNCHROCHAT USER", isSynchroChatUser);
   params = other;
   const data = await (
     await fetch("https://o2oviet.com/user.php", {
@@ -360,7 +368,6 @@ async function resetPassword({ token, password }) {
   });
 
   if (!account) throw "Invalid token";
-
   // const data = await (await fetch(`http://localhost/user-change-password.php`, {
   //     method: 'POST',
   //     headers: { 'Content-Type': 'application/json' },
@@ -430,6 +437,7 @@ async function create(params) {
 async function update(id, params) {
   const account = await getAccount(id);
 
+  console.log('ACCOUNT', account)
   // validate (if email was changed)
   if (
     params.email &&
@@ -441,8 +449,11 @@ async function update(id, params) {
   const chatUserUpdated = { ...params };
   if (params.email) {
     chatUserUpdated.newEmail = params.email;
-    chatUserUpdated.email = account.email;
   }
+
+  // update chat user require email
+  chatUserUpdated.email = account.email;
+
   // hash password if it was entered
   if (params.password) {
     params.passwordHash = hash(params.password);
@@ -627,6 +638,10 @@ async function submitDeviceToken(deviceToken, username) {
   const account = await db.Account.findOne({ username });
   if (!account) throw "Không tồn tại tài khoản này";
   account.deviceToken = deviceToken;
+  const result = await chatHandler.updateDeviceToken({
+    token: deviceToken,
+    email: account.email,
+  });
   await account.save();
 }
 

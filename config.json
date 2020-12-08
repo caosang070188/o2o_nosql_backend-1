@@ -1,5 +1,5 @@
 ﻿{
-    "connectionString": "mongodb://localhost:27017/authorization",
+    "connectionString": "mongodb://localhost:27017/authorization?retryWrites=false",
     "secret": "THISISUSEDTOSIGNANDVERIFYJWTTOKENSREPLACEITWITHYOUROWNSECRETITBEANYSTRING",
     "emailFrom": "info@node-mongo-signup-verification-api.com",
     "smtpOptions": {
