@@ -23,14 +23,18 @@ async function synchronizedChatUser(userData) {
 
 /**
  *
- * @param {{email: string, password:string, newPassword: string}} data
+ * @param {{email: string, password:string, newPassword: string, access_token: string}} data
  */
 async function changeChatUserPassword(data) {
   try {
+    const { access_token, ...other } = data;
     const result = await axios({
       method: "POST",
       url: `${chatUrl}/change-user-password`,
-      data,
+      data: other,
+      headers: {
+        Authorization: "Bearer " + data.access_token,
+      },
     });
     return result;
   } catch (error) {
@@ -40,14 +44,18 @@ async function changeChatUserPassword(data) {
 
 /**
  *
- * @param {{username:string, email:string, firstName:string, lastName: string, password: string, phone: string, newPassword: string}} data
+ * @param {{username:string, email:string, firstName:string, lastName: string, password: string, phone: string, newPassword: string, access_token: string}} data
  */
 async function updateChatUser(data) {
   try {
+    const { access_token, ...other } = data;
     const result = await axios({
       method: "POST",
       url: `${chatUrl}/update-user`,
-      data,
+      data: other,
+      headers: {
+        Authorization: "Bearer " + data.access_token,
+      },
     });
     return result;
   } catch (error) {

@@ -386,11 +386,12 @@ async function resetPassword({ token, password }) {
   account.passwordReset = Date.now();
   account.resetToken = undefined;
   if (data.data.message == "Success") {
-    await account.save();
     const chatUser = await changeChatUserPassword({
       email: account.email,
       newPassword: password,
+      access_token: account.chat_access_token,
     });
+    await account.save();
   } else {
     throw "Đổi mật khẩu không thành công!";
   }
@@ -437,7 +438,7 @@ async function create(params) {
 async function update(id, params) {
   const account = await getAccount(id);
 
-  console.log('ACCOUNT', account)
+  console.log("ACCOUNT", account);
   // validate (if email was changed)
   if (
     params.email &&
@@ -466,7 +467,10 @@ async function update(id, params) {
   Object.assign(account, params);
   account.updated = Date.now();
 
-  const chatUser = await updateChatUser(chatUserUpdated);
+  const chatUser = await updateChatUser({
+    ...chatUserUpdated,
+    access_token: account.chat_access_token,
+  });
 
   await account.save();
 
