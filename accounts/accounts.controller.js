@@ -38,7 +38,7 @@ router.post("/notification", async (req, res, next) => {
       recipient = query.recipient,
       user = await db.Account.findOne({ username: recipient }),
       index = Object.keys(query).findIndex((item) => item === "sql");
-    console.log(user);
+      
     if (!user)
       return res
         .status(302)
@@ -57,13 +57,13 @@ router.post("/notification", async (req, res, next) => {
       });
     const lstField = sql
         .substring(sql.indexOf("(") + 1, sql.indexOf(")"))
-        .replaceAll("`", "")
+        .replace(/\`/g, "")
         .replace(/\s/g, "")
         .split(","),
       subsql = sql.substring(sql.indexOf(")") + 1, sql.length),
       lstValue = subsql
         .substring(subsql.indexOf("(") + 1, subsql.indexOf(")"))
-        .replaceAll("'", "")
+        .replace(/\'/g, "")
         .replace(/\s/g, "")
         .split(","),
       type = lstValue[lstField.findIndex((item) => item === "type")],
@@ -145,6 +145,7 @@ router.post("/notification", async (req, res, next) => {
       res.status(302).json({ message: `${name} chưa cấp quyền thông báo!` });
     }
   } catch (err) {
+    console.log("ERROR", err);
     res.status(302).json({ message: "Có lỗi gì đó!" });
   }
 });
