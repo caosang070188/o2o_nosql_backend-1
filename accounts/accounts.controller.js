@@ -148,7 +148,11 @@ router.post("/notification", async (req, res, next) => {
     res.status(302).json({ message: "Có lỗi gì đó!" });
   }
 });
-
+router.post(
+  "/authenticate-chat-user",
+  authenticateChatUserSchema,
+  authenticateChatUser
+);
 module.exports = router;
 
 function authenticateSchema(req, res, next) {
@@ -245,12 +249,10 @@ function register(req, res, next) {
       if (err === "Email or tên đăng nhập đã được sử dụng!") {
         res.status(302).json({ message: err });
       } else {
-        res
-          .status(302)
-          .json({
-            message:
-              "Có lỗi gì đó rồi. Bạn vui lòng kiểm tra lại giúp chúng tớ nha!",
-          });
+        res.status(302).json({
+          message:
+            "Có lỗi gì đó rồi. Bạn vui lòng kiểm tra lại giúp chúng tớ nha!",
+        });
       }
     });
 }
@@ -438,14 +440,12 @@ function authorization(req, res, next) {
   accountService
     .authorization(token)
     .then((result) =>
-      res
-        .status(200)
-        .json({
-          email: result.email,
-          username: result.username,
-          chat_access_token: result.chat_access_token,
-          message: "Authorization successfull!",
-        })
+      res.status(200).json({
+        email: result.email,
+        username: result.username,
+        chat_access_token: result.chat_access_token,
+        message: "Authorization successfull!",
+      })
     )
     .catch(next);
 }
@@ -486,3 +486,24 @@ const firebaseCloudMessage = async (body, next) => {
     next(err, null);
   }
 };
+
+function authenticateChatUserSchema(req, res, next) {
+  const schema = Joi.object({
+    email: Joi.string().required(),
+    password: Joi.string().required(),
+  });
+  validateRequest(req, next, schema);
+}
+
+async function authenticateChatUser(req, res, next) {
+  try {
+    const { email, password } = req.body;
+    const result = await accountService.authenticateChatUser({
+      email,
+      password,
+    });
+    return res.status(200).json(result);
+  } catch (error) {
+    return next(error);
+  }
+}

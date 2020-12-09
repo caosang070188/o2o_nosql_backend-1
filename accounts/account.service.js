@@ -35,6 +35,7 @@ module.exports = {
   authorization,
   submitDeviceToken,
   testNotification,
+  authenticateChatUser,
 };
 
 async function authenticate({
@@ -57,7 +58,7 @@ async function authenticate({
       //   password,
       phone_number,
     } = data;
-    console.log("DATA", data);
+    
     const existAccount = {};
     existAccount.username = username;
     existAccount.firstName = data.first_name;
@@ -92,7 +93,6 @@ async function authenticate({
       : null;
     const account = await db.Account.findOne({ username });
 
-    console.log(account);
     if (!account || !bcrypt.compareSync(password, account.passwordHash)) {
       throw "Username or password is incorrect";
     }
@@ -157,7 +157,7 @@ async function revokeToken({ token, ipAddress }) {
 
 async function register(params, origin) {
   let { isSynchroChatUser, ...other } = params;
-  console.log("IS SYNCHROCHAT USER", isSynchroChatUser);
+  
   params = other;
   const data = await (
     await fetch("https://o2oviet.com/user.php", {
@@ -175,7 +175,7 @@ async function register(params, origin) {
     })
   ).json();
 
-  console.log(data);
+  
   if (data.message === "Email or username was used!") {
     throw "Email or tên đăng nhập đã được sử dụng!";
   }
@@ -270,7 +270,7 @@ async function registerWithoutSynchronizeChat(params, origin) {
     })
   ).json();
 
-  console.log(data);
+  
   if (data.message === "Email or username was used!") {
     throw "Email or tên đăng nhập đã được sử dụng!";
   }
@@ -438,7 +438,7 @@ async function create(params) {
 async function update(id, params) {
   const account = await getAccount(id);
 
-  console.log("ACCOUNT", account);
+  
   // validate (if email was changed)
   if (
     params.email &&
@@ -493,7 +493,7 @@ async function authorization(token) {
     const chatAuth = await authenticateChatAccessToken(
       account.chat_access_token
     );
-    console.log("AUTH DATA", chatAuth.data);
+    
     return {
       email: account.email,
       username: account.username,
@@ -575,6 +575,7 @@ function basicDetails(account) {
     gender,
     birthday,
     language,
+    username
     // chat_access_token,
   } = account;
   return {
@@ -598,6 +599,7 @@ function basicDetails(account) {
     gender,
     birthday,
     language,
+    username
     // chat_access_token,
   };
 }
@@ -689,3 +691,21 @@ const firebaseCloudMessage = async (body, next) => {
     next(err, null);
   }
 };
+
+async function authenticateChatUser({ email, password }) {
+  try {
+    const user = await db.Account.findOne({ email });
+    if (!user) {
+      throw { statusCode: 404, message: "user not found" };
+    }
+    const { username } = user;
+    const result = await authenticate({
+      username,
+      password,
+      isSynchroChatUser: false,
+    });
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
