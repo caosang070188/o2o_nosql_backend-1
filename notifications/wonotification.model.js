@@ -63,7 +63,7 @@ const WoNotificationsSchema = new Schema({
         type: String
     },
     time: {
-        type: String
+        type: Number
     },
     seen_pop: {
         type: Number,
