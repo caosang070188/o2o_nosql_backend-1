@@ -96,7 +96,7 @@ router.post("/find", async (req, res, next) => {
     try{
         const { body } = req;
         const params = body
-        const sort = {time:-1};
+        const sort = {_id:-1};
         let limit ;
         if (body.sort) {
             // const arr = body.sort.split(',')
