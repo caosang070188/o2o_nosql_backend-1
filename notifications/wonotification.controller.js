@@ -134,7 +134,7 @@ router.post("/find", async (req, res, next) => {
 router.put("/update", async (req, res, next) => {
     const { body } = req
     const { where, values } = body
-    wo_notification.update({
+    wo_notification.updateMany({
         ...where
     }, { ...values })
         .then(result => {
