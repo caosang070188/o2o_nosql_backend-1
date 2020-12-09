@@ -96,14 +96,14 @@ router.post("/find", async (req, res, next) => {
     try{
         const { body } = req;
         const params = body
-        const sort = {};
+        const sort = {time:-1};
         let limit ;
         if (body.sort) {
-            const arr = body.sort.split(',')
-            arr.forEach(element => { 
-                if (element === '-id')  return sort['_id'] = -1
-                if (element === 'id')  return sort['_id'] = 1
-            });
+            // const arr = body.sort.split(',')
+            // arr.forEach(element => { 
+            //     if (element === '-id')  return sort['_id'] = -1
+            //     if (element === 'id')  return sort['_id'] = 1
+            // });
             delete params.sort
         }
         if (body.limit) {
@@ -111,7 +111,7 @@ router.post("/find", async (req, res, next) => {
             delete params.limit
         }
         const count = await wo_notification.countDocuments({ ...params });
-        const result = await wo_notification.find({ ...params });
+        const result = await wo_notification.find({ ...params }).sort(sort).limit(limit);
         const results = [];
             result.forEach((value,index) =>{
                 const id = value._id
