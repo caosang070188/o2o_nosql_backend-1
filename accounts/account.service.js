@@ -44,10 +44,8 @@ async function authenticate({
   ipAddress,
   isSynchroChatUser,
 }) {
-  const res = await axios.get(
-      `https://o2oviet.com/user-check-register.php?username=${username}&password=${password}`
-    ),
-    { data } = res;
+  const res = await axios.post('https://o2oviet.com/user-check-register.php', {username, password}),
+  { data } = res;
 
   if (res.status === 200) {
     const {
@@ -58,7 +56,7 @@ async function authenticate({
       //   password,
       phone_number,
     } = data;
-    
+
     const existAccount = {};
     existAccount.username = username;
     existAccount.firstName = data.first_name;
