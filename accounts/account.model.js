@@ -1,7 +1,17 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const schema = new Schema({
+const deviceTokenSchema = new Schema({
+  deviceId: {
+    type: String,
+  },
+  token: {
+    type: String,
+  },
+});
+
+const schema = new Schema(
+  {
     username: { type: String, unique: true, required: true },
     email: { type: String, unique: true, required: true },
     passwordHash: { type: String, required: true },
@@ -27,31 +37,34 @@ const schema = new Schema({
     verificationToken: String,
     verified: Date,
     resetToken: {
-        token: String,
-        expires: Date
+      token: String,
+      expires: Date,
     },
     passwordReset: Date,
     token: String,
     deviceToken: String,
-    createdAt: { type: Date, default: Date.now },
+    //   createdAt: { type: Date, default: Date.now },
     updated: Date,
-    chat_access_token: String
+    chat_access_token: String,
+    deviceTokens: [deviceTokenSchema],
+  },
+  { timestamps: true }
+);
+
+schema.virtual("isVerified").get(function () {
+  return !!(this.verified || this.passwordReset);
 });
 
-schema.virtual('isVerified').get(function () {
-    return !!(this.verified || this.passwordReset);
+schema.set("toJSON", {
+  virtuals: true,
+  versionKey: false,
+  transform: function (doc, ret) {
+    // remove these props when object is serialized
+    delete ret._id;
+    delete ret.passwordHash;
+    delete ret.userId;
+    delete ret.userPassword;
+  },
 });
 
-schema.set('toJSON', {
-    virtuals: true,
-    versionKey: false,
-    transform: function (doc, ret) {
-        // remove these props when object is serialized
-        delete ret._id;
-        delete ret.passwordHash;
-        delete ret.userId;
-        delete ret.userPassword;
-    }
-});
-
-module.exports = mongoose.model('Account', schema);
+module.exports = mongoose.model("Account", schema);

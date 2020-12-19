@@ -7,6 +7,8 @@ const Role = require("_helpers/role");
 const accountService = require("./account.service");
 const db = require("_helpers/db");
 const fetch = require("node-fetch");
+const validator = require("../commons/validator");
+const accountValidation = require("./account.validation")
 
 // routes
 router.post("/authenticate", authenticateSchema, authenticate);
@@ -27,7 +29,7 @@ router.post("/", authorize(Role.Admin), createSchema, create);
 router.put("/:id", authorize(), updateSchema, update);
 router.delete("/:id", authorize(), _delete);
 router.post("/authorization/:token", authorizationSchema, authorization);
-router.post("/device-token", authorize(Role.User), submitDeviceToken);
+router.post("/device-token", authorize(Role.User), validator.validate("body", accountValidation.submitToken), submitDeviceToken);
 router.post("/test-fcm", authorize(), testFcm);
 router.post("/notification", async (req, res, next) => {
   try {
@@ -451,11 +453,23 @@ function authorization(req, res, next) {
     .catch(next);
 }
 
-function submitDeviceToken(req, res, next) {
-  accountService
-    .submitDeviceToken(req.body.token, req.user.username)
-    .then((_) => res.status(200).json("Submit device token success!"))
-    .catch(next);
+async function submitDeviceToken(req, res, next) {
+  try{
+    const user = req.user;
+  const {token, deviceId} = req.body;
+  // accountService
+  //   .submitDeviceToken(req.body.token, req.user.username)
+  //   .then((_) => res.status(200).json("Submit device token success!"))
+  //   .catch(next);
+  let account = await accountService.rawSubmitDeviceToken({deviceId, token, user_id: user._id});  
+  account = account.toObjet();
+  const {password, passwordHash, token: authenticate_token, access_chat_token, role, ...result} = account;
+  return res.status(200).json({data: result})
+  }catch(error){
+    return next(error)
+  }
+  
+
 }
 
 function testFcm(req, res, next) {

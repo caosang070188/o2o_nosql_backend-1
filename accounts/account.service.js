@@ -36,6 +36,7 @@ module.exports = {
   submitDeviceToken,
   testNotification,
   authenticateChatUser,
+  rawSubmitDeviceToken
 };
 
 async function authenticate({
@@ -58,7 +59,7 @@ async function authenticate({
       //   password,
       phone_number,
     } = data;
-    
+
     const existAccount = {};
     existAccount.username = username;
     existAccount.firstName = data.first_name;
@@ -157,7 +158,7 @@ async function revokeToken({ token, ipAddress }) {
 
 async function register(params, origin) {
   let { isSynchroChatUser, ...other } = params;
-  
+
   params = other;
   const data = await (
     await fetch("https://o2oviet.com/user.php", {
@@ -175,7 +176,6 @@ async function register(params, origin) {
     })
   ).json();
 
-  
   if (data.message === "Email or username was used!") {
     throw "Email or tên đăng nhập đã được sử dụng!";
   }
@@ -270,7 +270,6 @@ async function registerWithoutSynchronizeChat(params, origin) {
     })
   ).json();
 
-  
   if (data.message === "Email or username was used!") {
     throw "Email or tên đăng nhập đã được sử dụng!";
   }
@@ -438,7 +437,6 @@ async function create(params) {
 async function update(id, params) {
   const account = await getAccount(id);
 
-  
   // validate (if email was changed)
   if (
     params.email &&
@@ -493,7 +491,7 @@ async function authorization(token) {
     const chatAuth = await authenticateChatAccessToken(
       account.chat_access_token
     );
-    
+
     return {
       email: account.email,
       username: account.username,
@@ -575,7 +573,7 @@ function basicDetails(account) {
     gender,
     birthday,
     language,
-    username
+    username,
     // chat_access_token,
   } = account;
   return {
@@ -599,7 +597,7 @@ function basicDetails(account) {
     gender,
     birthday,
     language,
-    username
+    username,
     // chat_access_token,
   };
 }
@@ -649,6 +647,43 @@ async function submitDeviceToken(deviceToken, username) {
     email: account.email,
   });
   await account.save();
+}
+
+async function rawSubmitDeviceToken({ deviceId, token, user_id }) {
+  const user = await db.Account.findOne({ _id: user_id });
+  if (!user) {
+    throw "Không tồn tại tài khoản này";
+  }
+  if (token) {
+    if (
+      !user.deviceTokens ||
+      (user.deviceTokens instanceof Array && !user.deviceTokens.length)
+    ) {
+      user.deviceTokens = [{ deviceId, token }];
+    }
+    if (
+      user.deviceTokens &&
+      user.deviceTokens instanceof Array &&
+      user.deviceTokens.length
+    ) {
+      const index = user.deviceTokens.findIndex(item => item.deviceId.toString() === deviceId);
+      if(index === -1){
+        user.deviceTokens.push({deviceId, token})
+      }
+      else {
+        user.deviceTokens[index].token = token; 
+      }
+    }
+  }
+  if(!token && user.deviceTokens && user.deviceTokens instanceof Array){
+    const index = user.deviceTokens.findIndex(item => item.deviceId.toString() === deviceId);
+    if(index === -1){
+      return user;
+    }
+    user.deviceTokens.splice(index,1);
+  }
+  await user.save();
+  return user;
 }
 
 async function testNotification(title, body, username) {
