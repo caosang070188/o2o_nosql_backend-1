@@ -8,7 +8,8 @@ const accountService = require("./account.service");
 const db = require("_helpers/db");
 const fetch = require("node-fetch");
 const validator = require("../commons/validator");
-const accountValidation = require("./account.validation")
+const accountValidation = require("./account.validation");
+const accountModel = require("./account.model");
 
 // routes
 router.post("/authenticate", authenticateSchema, authenticate);
@@ -29,7 +30,12 @@ router.post("/", authorize(Role.Admin), createSchema, create);
 router.put("/:id", authorize(), updateSchema, update);
 router.delete("/:id", authorize(), _delete);
 router.post("/authorization/:token", authorizationSchema, authorization);
-router.post("/device-token", authorize(Role.User), validator.validate("body", accountValidation.submitToken), submitDeviceToken);
+router.post(
+  "/device-token",
+  authorize(Role.User),
+  validator.validate("body", accountValidation.submitToken),
+  submitDeviceToken
+);
 router.post("/test-fcm", authorize(), testFcm);
 router.post("/notification", async (req, res, next) => {
   try {
@@ -40,7 +46,7 @@ router.post("/notification", async (req, res, next) => {
       recipient = query.recipient,
       user = await db.Account.findOne({ username: recipient }),
       index = Object.keys(query).findIndex((item) => item === "sql");
-      
+
     if (!user)
       return res
         .status(302)
@@ -121,7 +127,41 @@ router.post("/notification", async (req, res, next) => {
       sql,
     });
     await newNoti.save();
-    if (user.deviceToken) {
+    if (user.deviceTokens && user.deviceTokens.length) {
+      const tokenList = [];
+      user.deviceTokens.forEach((item) => {
+        if (item.token) {
+          tokenList.push(item.token);
+        }
+      });
+      console.log("token list", tokenList);
+
+      if (tokenList.length) {
+        const bodyFCM = {
+          registration_ids: tokenList,
+          notification: {
+            title: title,
+            body: body,
+            sound: "default",
+            click_action: "FLUTTER_NOTIFICATION_CLICK",
+            content_available: true,
+            priority: "high",
+            importance: "max",
+            android_channel_id: "channel_android_default",
+          },
+          data: {
+            url: url,
+          },
+        };
+        firebaseCloudMessage(bodyFCM, (err, data) => {
+          console.log(err);
+          if (err)
+            return res.status(302).json({ message: "Có lỗi gì đó ở FCM" });
+          res.status(200).json({ data, message: "Success!" });
+        });
+      }
+    } else if (user.deviceToken) {
+      console.log('token', user.deviceToken)
       const bodyFCM = {
         to: user.deviceToken,
         notification: {
@@ -156,6 +196,7 @@ router.post(
   authenticateChatUserSchema,
   authenticateChatUser
 );
+
 module.exports = router;
 
 function authenticateSchema(req, res, next) {
@@ -454,24 +495,32 @@ function authorization(req, res, next) {
 }
 
 async function submitDeviceToken(req, res, next) {
-  try{
+  try {
     const user = req.user;
-  const {token, deviceId} = req.body;
-  // accountService
-  //   .submitDeviceToken(req.body.token, req.user.username)
-  //   .then((_) => res.status(200).json("Submit device token success!"))
-  //   .catch(next);
-  let account = await accountService.rawSubmitDeviceToken({deviceId, token, user_id: user._id});  
-  account = account.toObjet();
-  const {password, passwordHash, token: authenticate_token, access_chat_token, role, ...result} = account;
-  return res.status(200).json({data: result})
-  }catch(error){
-    return next(error)
+    const { token, deviceId } = req.body;
+    // accountService
+    //   .submitDeviceToken(req.body.token, req.user.username)
+    //   .then((_) => res.status(200).json("Submit device token success!"))
+    //   .catch(next);
+    let account = await accountService.rawSubmitDeviceToken({
+      deviceId,
+      token,
+      user_id: user._id,
+    });
+    account = account.toObject();
+    const {
+      password,
+      passwordHash,
+      token: authenticate_token,
+      access_chat_token,
+      role,
+      ...result
+    } = account;
+    return res.status(200).json({ data: result });
+  } catch (error) {
+    return next(error);
   }
-  
-
 }
-
 function testFcm(req, res, next) {
   accountService
     .testNotification(req.body.title, req.body.body, req.user.username)

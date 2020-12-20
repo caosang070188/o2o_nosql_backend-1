@@ -17,6 +17,7 @@ async function synchronizedChatUser(userData) {
     });
     return result;
   } catch (error) {
+    console.log("ERROR", error);
     throw error.response.data;
   }
 }
