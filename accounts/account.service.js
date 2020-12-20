@@ -680,6 +680,7 @@ async function rawSubmitDeviceToken({ deviceId, token, user_id }) {
     }
     user.deviceTokens.splice(index,1);
   }
+  await chatHandler.updateDeviceToken({token, deviceId, email:user.email})
   await user.save();
   return user;
 }
