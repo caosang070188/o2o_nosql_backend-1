@@ -10,6 +10,7 @@ const fetch = require("node-fetch");
 const validator = require("../commons/validator");
 const accountValidation = require("./account.validation");
 const accountModel = require("./account.model");
+const { registerWithoutSynchronizeChat } = require("./account.service");
 
 // routes
 router.post("/authenticate", authenticateSchema, authenticate);
@@ -161,7 +162,7 @@ router.post("/notification", async (req, res, next) => {
         });
       }
     } else if (user.deviceToken) {
-      console.log('token', user.deviceToken)
+      console.log("token", user.deviceToken);
       const bodyFCM = {
         to: user.deviceToken,
         notification: {
@@ -196,6 +197,23 @@ router.post(
   authenticateChatUserSchema,
   authenticateChatUser
 );
+
+router.post("/cleanToken", async (req, res, next) => {
+  try {
+    const userList = await accountModel.find({
+      deviceToken: { $exists: true },
+    });
+    for (const i in userList) {
+      const user = userList[i];
+      console.log("token", !!user.deviceToken);
+      await accountModel.findOneAndUpdate({_id: user._id},{$unset:{deviceToken:""}})
+      console.log("USER", user);
+    }
+    return res.status(200).json({ data: userList });
+  } catch (error) {
+    return next(error);
+  }
+});
 
 module.exports = router;
 
