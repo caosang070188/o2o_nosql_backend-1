@@ -308,6 +308,7 @@ function register(req, res, next) {
       })
     )
     .catch((err) => {
+      console.log('error', err)
       if (err === "Email or tên đăng nhập đã được sử dụng!") {
         res.status(302).json({ message: err });
       } else {

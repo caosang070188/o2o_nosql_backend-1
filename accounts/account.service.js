@@ -36,7 +36,7 @@ module.exports = {
   submitDeviceToken,
   testNotification,
   authenticateChatUser,
-  rawSubmitDeviceToken
+  rawSubmitDeviceToken,
 };
 
 async function authenticate({
@@ -45,8 +45,11 @@ async function authenticate({
   ipAddress,
   isSynchroChatUser,
 }) {
-  const res = await axios.post('https://o2oviet.com/user-check-register.php', {username, password}),
-  { data } = res;
+  const res = await axios.post("https://o2oviet.com/user-check-register.php", {
+      username,
+      password,
+    }),
+    { data } = res;
 
   if (res.status === 200) {
     const {
@@ -57,7 +60,7 @@ async function authenticate({
       //   password,
       phone_number,
     } = data;
-
+    console.log("DATA", data);
     const existAccount = {};
     existAccount.username = username;
     existAccount.firstName = data.first_name;
@@ -88,6 +91,8 @@ async function authenticate({
           lastName: last_name,
           password,
           phone: phone_number,
+        }).catch((error) => {
+          console.log("synchronize chat fail", error);
         })
       : null;
     const account = await db.Account.findOne({ username });
@@ -158,6 +163,15 @@ async function register(params, origin) {
   let { isSynchroChatUser, ...other } = params;
 
   params = other;
+  const {
+    username,
+    password,
+    firstName,
+    lastName,
+    phoneNumber,
+    email,
+  } = params;
+
   const data = await (
     await fetch("https://o2oviet.com/user.php", {
       method: "POST",
@@ -183,12 +197,14 @@ async function register(params, origin) {
     // const tempUser = await db.Account.findOne({ username: params.username });
     if (isSynchroChatUser) {
       await synchronizedChatUser({
-        username,
-        email,
-        firstName,
-        lastName,
-        password,
+        username: params.username,
+        email: params.email,
+        firstName: params.firstName,
+        lastName: params.lastName,
+        password: params.password,
         phone: phoneNumber,
+      }).catch((error) => {
+        console.log("synchronize chat when register", error);
       });
     }
     return await sendAlreadyRegisteredEmail(user.email, origin);
@@ -220,15 +236,6 @@ async function register(params, origin) {
   // save account
   await account.save();
 
-  const {
-    username,
-    password,
-    firstName,
-    lastName,
-    phoneNumber,
-    email,
-  } = params;
-
   if (isSynchroChatUser) {
     const chatUser = await synchronizedChatUser({
       username,
@@ -237,6 +244,8 @@ async function register(params, origin) {
       lastName,
       password,
       phone: phoneNumber,
+    }).catch((error) => {
+      console.log("synchronize chat when register", error);
     });
   }
 
@@ -423,6 +432,8 @@ async function create(params) {
       lastName,
       email,
       password,
+    }).catch((error) => {
+      console.log("synchronize chat error when create", error);
     });
   }
 
@@ -488,12 +499,14 @@ async function authorization(token) {
 
     const chatAuth = await authenticateChatAccessToken(
       account.chat_access_token
-    );
+    ).catch((error) => {
+      console.log("error when authenticate chat user", error);
+    });
 
     return {
       email: account.email,
       username: account.username,
-      chat_access_token: chatAuth.data.token,
+      chat_access_token: chatAuth.data ? chatAuth.data.token : "",
     };
   } catch (error) {
     throw error;
@@ -640,10 +653,14 @@ async function submitDeviceToken(deviceToken, username) {
   const account = await db.Account.findOne({ username });
   if (!account) throw "Không tồn tại tài khoản này";
   account.deviceToken = deviceToken;
-  const result = await chatHandler.updateDeviceToken({
-    token: deviceToken,
-    email: account.email,
-  });
+  const result = await chatHandler
+    .updateDeviceToken({
+      token: deviceToken,
+      email: account.email,
+    })
+    .catch((error) => {
+      console.log("error when update chat device token", error);
+    });
   await account.save();
 }
 
@@ -664,26 +681,33 @@ async function rawSubmitDeviceToken({ deviceId, token, user_id }) {
       user.deviceTokens instanceof Array &&
       user.deviceTokens.length
     ) {
-      const index = user.deviceTokens.findIndex(item => item.deviceId.toString() === deviceId);
-      if(index === -1){
-        user.deviceTokens.push({deviceId, token})
-      }
-      else {
-        user.deviceTokens[index].token = token; 
+      const index = user.deviceTokens.findIndex(
+        (item) => item.deviceId.toString() === deviceId
+      );
+      if (index === -1) {
+        user.deviceTokens.push({ deviceId, token });
+      } else {
+        user.deviceTokens[index].token = token;
       }
     }
   }
-  if(!token && user.deviceTokens && user.deviceTokens instanceof Array){
-    const index = user.deviceTokens.findIndex(item => item.deviceId.toString() === deviceId);
-    if(index === -1){
+  if (!token && user.deviceTokens && user.deviceTokens instanceof Array) {
+    const index = user.deviceTokens.findIndex(
+      (item) => item.deviceId.toString() === deviceId
+    );
+    if (index === -1) {
       return user;
     }
-    user.deviceTokens.splice(index,1);
+    user.deviceTokens.splice(index, 1);
   }
-  if(user.deviceToken){
+  if (user.deviceToken) {
     delete user.deviceToken;
   }
-  await chatHandler.updateDeviceToken({token, deviceId, email:user.email})
+  await chatHandler
+    .updateDeviceToken({ token, deviceId, email: user.email })
+    .catch((error) => {
+      console.log("error when update chat device token", error);
+    });
   await user.save();
   return user;
 }

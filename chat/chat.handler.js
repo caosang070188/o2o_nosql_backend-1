@@ -18,7 +18,7 @@ async function synchronizedChatUser(userData) {
     return result;
   } catch (error) {
     console.log("ERROR", error);
-    throw error.response.data;
+    throw error.response ? error.response.data : error;
   }
 }
 
@@ -39,7 +39,8 @@ async function changeChatUserPassword(data) {
     });
     return result;
   } catch (error) {
-    throw error.response.data;
+    console.log("error", error);
+    throw error.response ? error.response.data : error;
   }
 }
 
@@ -61,7 +62,7 @@ async function updateChatUser(data) {
     return result;
   } catch (error) {
     console.log("ERROR", error.response.data);
-    throw { message: error.response.data };
+    throw { message: error.response ? error.response.data : error };
   }
 }
 
@@ -75,7 +76,7 @@ async function authenticateChatAccessToken(token) {
     return result;
   } catch (error) {
     console.log("Error", error.response.data);
-    throw { message: error.response.data };
+    throw { message: error.response ? error.response.data : error };
   }
 }
 
@@ -89,7 +90,7 @@ async function updateDeviceToken({ token, email, deviceId }) {
     return result;
   } catch (error) {
     console.log("Update deviceToken chat user error", error.response.data);
-    throw { message: error.response.data };
+    throw { message: error.response ? error.response.data : error };
   }
 }
 module.exports = {
