@@ -349,7 +349,7 @@ async function forgotPassword({ email }, origin) {
 
   // always return ok response to prevent email enumeration
   if (!account) {
-    throw "email not found"
+    throw "user not found with this email"
   };
 
   // create reset token that expires after 24 hours
