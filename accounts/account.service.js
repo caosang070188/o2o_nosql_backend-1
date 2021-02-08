@@ -105,9 +105,11 @@ async function authenticate({
     const refreshToken = generateRefreshToken(account, ipAddress);
     account.token = token;
     let chat_access_token = "";
+    let chat_user_id = "";
     if (chatRegister && chatRegister.data && chatRegister.data.access_token) {
       account.chat_access_token = chatRegister.data.access_token;
       chat_access_token = chatRegister.data.access_token;
+      chat_user_id = chatRegister.data._id;
     }
     await account.save();
     await refreshToken.save();
@@ -115,6 +117,7 @@ async function authenticate({
       ...basicDetails(account),
       token,
       refreshToken: refreshToken.token,
+      chat_user_id,
     };
     if (chat_access_token) {
       result.chat_access_token = chat_access_token;
