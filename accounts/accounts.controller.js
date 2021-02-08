@@ -255,7 +255,9 @@ function refreshToken(req, res, next) {
       setTokenCookie(res, refreshToken);
       res.json(account);
     })
-    .catch(next);
+    .catch(error =>{
+      return next(error)
+    });
 }
 
 function revokeTokenSchema(req, res, next) {
@@ -281,7 +283,9 @@ function revokeToken(req, res, next) {
   accountService
     .revokeToken({ token, ipAddress })
     .then(() => res.json({ message: "Code đã được thu hồi." }))
-    .catch(next);
+    .catch(error =>{
+      return next(error)
+    });
 }
 
 function registerSchema(req, res, next) {
@@ -338,7 +342,9 @@ function verifyEmail(req, res, next) {
         message: "Xác thực thành công. Bây giờ bạn có thể đăng nhập rồi.",
       })
     )
-    .catch(next);
+    .catch(error =>{
+      return next(error)
+    });
 }
 
 function forgotPasswordSchema(req, res, next) {
@@ -373,7 +379,9 @@ function validateResetToken(req, res, next) {
   accountService
     .validateResetToken(req.body)
     .then(() => res.json({ message: "Code đã hết hạn" }))
-    .catch(next);
+    .catch(error =>{
+      return next(error)
+    });
 }
 
 function resetPasswordSchema(req, res, next) {
@@ -394,14 +402,18 @@ function resetPassword(req, res, next) {
         message: "Mật khẩu đã được thay đổi. Bây giờ bạn có thể đăng nhập rồi.",
       })
     )
-    .catch(next);
+    .catch(error =>{
+      return next(error)
+    });
 }
 
 function getAll(req, res, next) {
   accountService
     .getAll()
     .then((accounts) => res.json(accounts))
-    .catch(next);
+    .catch(error =>{
+      return next(error)
+    });
 }
 
 function getById(req, res, next) {
@@ -413,7 +425,9 @@ function getById(req, res, next) {
   accountService
     .getById(req.params.id)
     .then((account) => (account ? res.json(account) : res.sendStatus(404)))
-    .catch(next);
+    .catch(error =>{
+      return next(error)
+    });
 }
 
 function createSchema(req, res, next) {
@@ -434,7 +448,9 @@ function create(req, res, next) {
   accountService
     .create(req.body)
     .then((account) => res.json(account))
-    .catch(next);
+    .catch(error =>{
+      return next(error)
+    });
 }
 
 function updateSchema(req, res, next) {
@@ -465,7 +481,9 @@ function update(req, res, next) {
   accountService
     .update(req.params.id, req.body)
     .then((account) => res.json(account))
-    .catch(next);
+    .catch(error =>{
+      return next(error)
+    });
 }
 
 function _delete(req, res, next) {
@@ -477,7 +495,9 @@ function _delete(req, res, next) {
   accountService
     .delete(req.params.id)
     .then(() => res.json({ message: "Account deleted successfully" }))
-    .catch(next);
+    .catch(error =>{
+      return next(error)
+    });
 }
 
 // helper functions
@@ -515,7 +535,9 @@ function authorization(req, res, next) {
         message: "Authorization successfull!",
       })
     )
-    .catch(next);
+    .catch(error =>{
+      return next(error)
+    });
 }
 
 async function submitDeviceToken(req, res, next) {
@@ -525,7 +547,9 @@ async function submitDeviceToken(req, res, next) {
     // accountService
     //   .submitDeviceToken(req.body.token, req.user.username)
     //   .then((_) => res.status(200).json("Submit device token success!"))
-    //   .catch(next);
+    //   .catch(error =>{
+    //   return next(error)
+    // });
     let account = await accountService.rawSubmitDeviceToken({
       deviceId,
       token,
@@ -549,7 +573,9 @@ function testFcm(req, res, next) {
   accountService
     .testNotification(req.body.title, req.body.body, req.user.username)
     .then((result) => res.status(200).json("Success Test!"))
-    .catch(next);
+    .catch(error =>{
+      return next(error)
+    });
 }
 
 const firebaseCloudMessage = async (body, next) => {
