@@ -206,7 +206,10 @@ router.post("/cleanToken", async (req, res, next) => {
     for (const i in userList) {
       const user = userList[i];
       console.log("token", !!user.deviceToken);
-      await accountModel.findOneAndUpdate({_id: user._id},{$unset:{deviceToken:""}})
+      await accountModel.findOneAndUpdate(
+        { _id: user._id },
+        { $unset: { deviceToken: "" } }
+      );
       console.log("USER", user);
     }
     return res.status(200).json({ data: userList });
@@ -308,7 +311,7 @@ function register(req, res, next) {
       })
     )
     .catch((err) => {
-      console.log('error', err)
+      console.log("error", err);
       if (err === "Email or tên đăng nhập đã được sử dụng!") {
         res.status(302).json({ message: err });
       } else {
@@ -354,7 +357,9 @@ function forgotPassword(req, res, next) {
           "Bạn vui lòng kiểm tra email nha. Code đã được gửi tới email của bạn.",
       })
     )
-    .catch(next);
+    .catch((error) => {
+      next(error);
+    });
 }
 
 function validateResetTokenSchema(req, res, next) {

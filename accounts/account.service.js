@@ -348,7 +348,9 @@ async function forgotPassword({ email }, origin) {
   const account = await db.Account.findOne({ email });
 
   // always return ok response to prevent email enumeration
-  if (!account) return;
+  if (!account) {
+    throw "email not found"
+  };
 
   // create reset token that expires after 24 hours
   account.resetToken = {
