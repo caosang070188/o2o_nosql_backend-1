@@ -231,7 +231,8 @@ async function register(params, origin) {
   account.language = data.language;
   // first registered account is an admin
   account.role = Role.User;
-  account.verificationToken = randomTokenString();
+  // account.verificationToken = randomTokenString();
+  account.verified = Date.now();
 
   // hash password
   account.passwordHash = hash(params.password);
@@ -253,7 +254,7 @@ async function register(params, origin) {
   }
 
   // send email
-  await sendVerificationEmail(account, origin);
+  // await sendVerificationEmail(account, origin);
   // .then(res => res.json())
   //     .then(async data => {
 
@@ -317,7 +318,7 @@ async function registerWithoutSynchronizeChat(params, origin) {
   await account.save();
 
   // send email
-  await sendVerificationEmail(account, origin);
+  // await sendVerificationEmail(account, origin);
 }
 
 async function verifyEmail({ token }) {
@@ -349,8 +350,8 @@ async function forgotPassword({ email }, origin) {
 
   // always return ok response to prevent email enumeration
   if (!account) {
-    throw "user not found with this email"
-  };
+    throw "user not found with this email";
+  }
 
   // create reset token that expires after 24 hours
   account.resetToken = {
@@ -677,6 +678,7 @@ async function rawSubmitDeviceToken({ deviceId, token, user_id }) {
   if (token) {
     if (
       !user.deviceTokens ||
+      !(user.deviceTokens instanceof Array) ||
       (user.deviceTokens instanceof Array && !user.deviceTokens.length)
     ) {
       user.deviceTokens = [{ deviceId, token }];
@@ -706,7 +708,7 @@ async function rawSubmitDeviceToken({ deviceId, token, user_id }) {
     user.deviceTokens.splice(index, 1);
   }
   if (user.deviceToken) {
-    delete user.deviceToken;
+    user.deviceToken = undefined;
   }
   await chatHandler
     .updateDeviceToken({ token, deviceId, email: user.email })

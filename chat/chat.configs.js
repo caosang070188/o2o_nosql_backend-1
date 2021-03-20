@@ -1,3 +1,3 @@
 module.exports = {
-  chatUrl: "http://45.119.83.73:3002/api",
+  chatUrl: "https://chatnhom.o2oviet.com/api",
 };
