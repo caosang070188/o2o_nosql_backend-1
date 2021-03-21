@@ -697,6 +697,9 @@ async function rawSubmitDeviceToken({ deviceId, token, user_id, deviceType }) {
         user.deviceTokens.push(deviceTokenItem);
       } else {
         user.deviceTokens[index].token = token;
+        if (deviceType && !user.deviceTokens[index].deviceType) {
+          user.deviceTokens[index].deviceType = deviceType;
+        }
       }
     }
   }
