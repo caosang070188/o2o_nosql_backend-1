@@ -80,12 +80,12 @@ async function authenticateChatAccessToken(token) {
   }
 }
 
-async function updateDeviceToken({ token, email, deviceId }) {
+async function updateDeviceToken({ token, email, deviceId, deviceType }) {
   try {
     const result = await axios({
       method: "POST",
       url: `${chatUrl}/update-device-token`,
-      data: { token, email, deviceId },
+      data: { token, email, deviceId, deviceType },
     });
     return result;
   } catch (error) {

@@ -255,8 +255,8 @@ function refreshToken(req, res, next) {
       setTokenCookie(res, refreshToken);
       res.json(account);
     })
-    .catch(error =>{
-      return next(error)
+    .catch((error) => {
+      return next(error);
     });
 }
 
@@ -283,8 +283,8 @@ function revokeToken(req, res, next) {
   accountService
     .revokeToken({ token, ipAddress })
     .then(() => res.json({ message: "Code đã được thu hồi." }))
-    .catch(error =>{
-      return next(error)
+    .catch((error) => {
+      return next(error);
     });
 }
 
@@ -342,8 +342,8 @@ function verifyEmail(req, res, next) {
         message: "Xác thực thành công. Bây giờ bạn có thể đăng nhập rồi.",
       })
     )
-    .catch(error =>{
-      return next(error)
+    .catch((error) => {
+      return next(error);
     });
 }
 
@@ -379,8 +379,8 @@ function validateResetToken(req, res, next) {
   accountService
     .validateResetToken(req.body)
     .then(() => res.json({ message: "Code đã hết hạn" }))
-    .catch(error =>{
-      return next(error)
+    .catch((error) => {
+      return next(error);
     });
 }
 
@@ -402,8 +402,8 @@ function resetPassword(req, res, next) {
         message: "Mật khẩu đã được thay đổi. Bây giờ bạn có thể đăng nhập rồi.",
       })
     )
-    .catch(error =>{
-      return next(error)
+    .catch((error) => {
+      return next(error);
     });
 }
 
@@ -411,8 +411,8 @@ function getAll(req, res, next) {
   accountService
     .getAll()
     .then((accounts) => res.json(accounts))
-    .catch(error =>{
-      return next(error)
+    .catch((error) => {
+      return next(error);
     });
 }
 
@@ -425,8 +425,8 @@ function getById(req, res, next) {
   accountService
     .getById(req.params.id)
     .then((account) => (account ? res.json(account) : res.sendStatus(404)))
-    .catch(error =>{
-      return next(error)
+    .catch((error) => {
+      return next(error);
     });
 }
 
@@ -448,8 +448,8 @@ function create(req, res, next) {
   accountService
     .create(req.body)
     .then((account) => res.json(account))
-    .catch(error =>{
-      return next(error)
+    .catch((error) => {
+      return next(error);
     });
 }
 
@@ -481,8 +481,8 @@ function update(req, res, next) {
   accountService
     .update(req.params.id, req.body)
     .then((account) => res.json(account))
-    .catch(error =>{
-      return next(error)
+    .catch((error) => {
+      return next(error);
     });
 }
 
@@ -495,8 +495,8 @@ function _delete(req, res, next) {
   accountService
     .delete(req.params.id)
     .then(() => res.json({ message: "Account deleted successfully" }))
-    .catch(error =>{
-      return next(error)
+    .catch((error) => {
+      return next(error);
     });
 }
 
@@ -535,15 +535,15 @@ function authorization(req, res, next) {
         message: "Authorization successfull!",
       })
     )
-    .catch(error =>{
-      return next(error)
+    .catch((error) => {
+      return next(error);
     });
 }
 
 async function submitDeviceToken(req, res, next) {
   try {
     const user = req.user;
-    const { token, deviceId } = req.body;
+    const { token, deviceId, deviceType } = req.body;
     // accountService
     //   .submitDeviceToken(req.body.token, req.user.username)
     //   .then((_) => res.status(200).json("Submit device token success!"))
@@ -554,6 +554,7 @@ async function submitDeviceToken(req, res, next) {
       deviceId,
       token,
       user_id: user._id,
+      deviceType,
     });
     account = account.toObject();
     const {
@@ -573,8 +574,8 @@ function testFcm(req, res, next) {
   accountService
     .testNotification(req.body.title, req.body.body, req.user.username)
     .then((result) => res.status(200).json("Success Test!"))
-    .catch(error =>{
-      return next(error)
+    .catch((error) => {
+      return next(error);
     });
 }
 

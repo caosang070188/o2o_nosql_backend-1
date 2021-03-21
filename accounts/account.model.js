@@ -8,6 +8,10 @@ const deviceTokenSchema = new Schema({
   token: {
     type: String,
   },
+  deviceType: {
+    type: String,
+    enum: ["ios", "android"],
+  },
 });
 
 const schema = new Schema(

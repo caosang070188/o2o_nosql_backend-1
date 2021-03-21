@@ -60,7 +60,7 @@ async function authenticate({
       //   password,
       phone_number,
     } = data;
-    console.log("DATA", data);
+    // console.log("DATA", data);
     const existAccount = {};
     existAccount.username = username;
     existAccount.firstName = data.first_name;
@@ -670,18 +670,19 @@ async function submitDeviceToken(deviceToken, username) {
   await account.save();
 }
 
-async function rawSubmitDeviceToken({ deviceId, token, user_id }) {
+async function rawSubmitDeviceToken({ deviceId, token, user_id, deviceType }) {
   const user = await db.Account.findOne({ _id: user_id });
   if (!user) {
     throw "Không tồn tại tài khoản này";
   }
   if (token) {
+    const deviceTokenItem = { deviceId, token, deviceType };
     if (
       !user.deviceTokens ||
       !(user.deviceTokens instanceof Array) ||
       (user.deviceTokens instanceof Array && !user.deviceTokens.length)
     ) {
-      user.deviceTokens = [{ deviceId, token }];
+      user.deviceTokens = [deviceTokenItem];
     }
     if (
       user.deviceTokens &&
@@ -692,7 +693,7 @@ async function rawSubmitDeviceToken({ deviceId, token, user_id }) {
         (item) => item.deviceId.toString() === deviceId
       );
       if (index === -1) {
-        user.deviceTokens.push({ deviceId, token });
+        user.deviceTokens.push(deviceTokenItem);
       } else {
         user.deviceTokens[index].token = token;
       }
@@ -711,7 +712,7 @@ async function rawSubmitDeviceToken({ deviceId, token, user_id }) {
     user.deviceToken = undefined;
   }
   await chatHandler
-    .updateDeviceToken({ token, deviceId, email: user.email })
+    .updateDeviceToken({ token, deviceId, email: user.email, deviceType })
     .catch((error) => {
       console.log("error when update chat device token", error);
     });
