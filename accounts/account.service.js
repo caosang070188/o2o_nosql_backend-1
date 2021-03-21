@@ -677,6 +677,7 @@ async function rawSubmitDeviceToken({ deviceId, token, user_id, deviceType }) {
   }
   if (token) {
     const deviceTokenItem = { deviceId, token, deviceType };
+    console.log("device Token Item", deviceTokenItem);
     if (
       !user.deviceTokens ||
       !(user.deviceTokens instanceof Array) ||
