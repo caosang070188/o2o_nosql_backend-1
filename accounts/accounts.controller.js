@@ -491,7 +491,7 @@ function _delete(req, res, next) {
   if (req.params.id !== req.user.id && req.user.role !== Role.Admin) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-
+  
   accountService
     .delete(req.params.id)
     .then(() => res.json({ message: "Account deleted successfully" }))
@@ -500,6 +500,16 @@ function _delete(req, res, next) {
     });
 }
 
+function deleteTokenWO(id){
+  accountService.getById(id)
+  .then((account) => {
+    console.log(account)
+    if(account){
+      accountService.callDeleteWOToken(account.username)
+      .then(() => res.json({ message: "deleted token successfully" }))
+    }
+  })
+}
 // helper functions
 
 function setTokenCookie(res, token) {

