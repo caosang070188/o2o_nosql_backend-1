@@ -498,6 +498,10 @@ async function update(id, params) {
 
 async function _delete(id) {
   const account = await getAccount(id);
+  if(account){
+    const {username} = account;
+    callDeleteWOToken(username)
+  }
   await account.remove();
 }
 
@@ -799,5 +803,4 @@ async function callDeleteWOToken(username){
   } catch (error) {
     throw error;
   }
-  
 }
