@@ -38,6 +38,7 @@ module.exports = {
   authenticateChatUser,
   rawSubmitDeviceToken,
   callDeleteWOToken,
+  getListFriends
 };
 
 async function authenticate({
@@ -803,4 +804,20 @@ async function callDeleteWOToken(username){
   } catch (error) {
     throw error;
   }
+}
+
+async function getListFriends(prams){
+  try{
+    const {username, limit} = prams
+    console.log(username)
+    const res = await axios.post("https://o2oviet.com/get_list_friends.php", {
+      username,
+      limit
+    });
+    const { data } = res;
+    return data;
+  } catch (error) {
+    throw error;
+  }
+  
 }

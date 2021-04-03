@@ -18,6 +18,7 @@ router.post("/refresh-token", refreshToken);
 router.post("/revoke-token", authorize(), revokeTokenSchema, revokeToken);
 router.post("/register", registerSchema, register);
 router.post("/verify-email", verifyEmailSchema, verifyEmail);
+router.post("/get-list-friends", getListFriends);
 router.post("/forgot-password", forgotPasswordSchema, forgotPassword);
 router.post(
   "/validate-reset-token",
@@ -626,6 +627,18 @@ async function authenticateChatUser(req, res, next) {
     const result = await accountService.authenticateChatUser({
       email,
       password,
+    });
+    return res.status(200).json(result);
+  } catch (error) {
+    return next(error);
+  }
+}
+async function getListFriends(req, res, next) {
+  try {
+    const { username, limit } = req.body;
+    const result = await accountService.getListFriends({
+      username,
+      limit,
     });
     return res.status(200).json(result);
   } catch (error) {
