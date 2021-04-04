@@ -42,8 +42,8 @@ module.exports = {
   getListFriends,
   generateFriends,
   addFriend,
-  deleteFriend, 
-  findFriend
+  deleteFriend,
+  findFriend,
 };
 
 async function authenticate({
@@ -132,8 +132,8 @@ async function authenticate({
     axios.post("https://o2oviet.com/user-check-token.php", {
       username,
       token,
-      chatToken: chat_access_token
-    })
+      chatToken: chat_access_token,
+    });
     return result;
   } else {
     throw "Username or password is incorrect";
@@ -504,20 +504,19 @@ async function update(id, params) {
 
 async function _delete(id) {
   const account = await getAccount(id);
-  if(account){
-    const {username} = account;
-    callDeleteWOToken(username)
+  if (account) {
+    const { username } = account;
+    callDeleteWOToken(username);
   }
   await account.remove();
 }
 
 async function authorization(user) {
   try {
-   
     // const { email } = data,
     //   account = await db.Account.findOne({ email });
     // if (!account) throw "Authorization fail!";
-
+    console.log("user", user);
     const chatAuth = await authenticateChatAccessToken(
       user.chat_access_token
     ).catch((error) => {
@@ -527,7 +526,7 @@ async function authorization(user) {
     return {
       email: user.email,
       username: user.username,
-      chat_access_token: chatAuth.data ? chatAuth.data.token : "",
+      chat_access_token: chatAuth && chatAuth.data ? chatAuth.data.token : "",
     };
   } catch (error) {
     console.log("error", error);
@@ -545,7 +544,7 @@ async function getAccount(id) {
 }
 async function getAccountByUsername(username) {
   // if (!db.isValidId(username)) throw "Account not found";
-  const account = await db.Account.findOne({username});
+  const account = await db.Account.findOne({ username });
   if (!account) throw "Account not found";
   return account;
 }
@@ -805,11 +804,11 @@ async function authenticateChatUser({ email, password }) {
   }
 }
 
-async function callDeleteWOToken(username){
-  try{
+async function callDeleteWOToken(username) {
+  try {
     const res = await axios.post("https://o2oviet.com/user-check-token.php", {
       username,
-      flag: 1
+      flag: 1,
     });
     return res;
   } catch (error) {
@@ -817,26 +816,24 @@ async function callDeleteWOToken(username){
   }
 }
 
-async function getListFriends(prams){
-  try{
-    const {username, limit} = prams
+async function getListFriends(prams) {
+  try {
+    const { username, limit } = prams;
     const res = await axios.post("https://o2oviet.com/get_list_friends.php", {
       username,
-      limit
+      limit,
     });
     const { data, status } = res;
-    console.log(status)
-    if(status === 200){
+    console.log(status);
+    if (status === 200) {
       return data;
-    }else{
+    } else {
       return [];
     }
   } catch (error) {
     throw error;
   }
-  
 }
-
 
 function generateFriends(account, friend) {
   // create a refresh token that expires in 7 days
@@ -849,7 +846,7 @@ function generateFriends(account, friend) {
 function addFriend(account, friend) {
   // create a refresh token that expires in 7 days
   return db.Friends.update(
-    { 'account.id': account.id },
+    { "account.id": account.id },
     { $addToSet: { friends: friend } }
   );
 }
@@ -857,14 +854,14 @@ function addFriend(account, friend) {
 function deleteFriend(account, friend) {
   // create a refresh token that expires in 7 days
   return new db.Friends.update(
-    { 'account.id': account.id },
+    { "account.id": account.id },
     { $pull: { friends: { username: friend.username } } },
     false, // Upsert
-    true, // Multi
+    true // Multi
   );
 }
 function findFriend(account) {
   // create a refresh token that expires in 7 days
-  const {id} = account
-  return db.Friends.findOne({ 'account.id': id });
+  const { id } = account;
+  return db.Friends.findOne({ "account.id": id });
 }

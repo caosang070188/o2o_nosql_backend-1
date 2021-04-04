@@ -71,6 +71,7 @@ async function authenticateChatAccessToken(token) {
     const result = await axios({
       method: "POST",
       url: `${chatUrl}/authorization`,
+      headers: { Authorization: "Bearer " + token },
       data: { token },
     });
     return result;
