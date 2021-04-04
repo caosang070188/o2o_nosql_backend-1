@@ -495,26 +495,26 @@ async function _delete(id) {
   await account.remove();
 }
 
-async function authorization(token) {
+async function authorization(user) {
   try {
-    const { email } = jwt.decode(token),
-      account = await db.Account.findOne({ email });
-    if (!account) throw "Authorization fail!";
-    const verify = jwt.verify(token, config.secret);
-    if (!verify) throw "Authorization fail!";
+   
+    // const { email } = data,
+    //   account = await db.Account.findOne({ email });
+    // if (!account) throw "Authorization fail!";
 
     const chatAuth = await authenticateChatAccessToken(
-      account.chat_access_token
+      user.chat_access_token
     ).catch((error) => {
       console.log("error when authenticate chat user", error);
     });
 
     return {
-      email: account.email,
-      username: account.username,
+      email: user.email,
+      username: user.username,
       chat_access_token: chatAuth.data ? chatAuth.data.token : "",
     };
   } catch (error) {
+    console.log("error", error);
     throw error;
   }
 }

@@ -30,7 +30,7 @@ router.get("/:id", authorize(), getById);
 router.post("/", authorize(Role.Admin), createSchema, create);
 router.put("/:id", authorize(), updateSchema, update);
 router.delete("/:id", authorize(), _delete);
-router.post("/authorization/:token", authorizationSchema, authorization);
+router.post("/authorization", authorize(Role.User), authorization);
 router.post(
   "/device-token",
   authorize(Role.User),
@@ -511,10 +511,10 @@ function setTokenCookie(res, token) {
   res.cookie("refreshToken", token, cookieOptions);
 }
 
-function authorizationSchema(req, res, next) {
-  const schema = Joi.object({});
-  validateRequest(req, next, schema);
-}
+// function authorizationSchema(req, res, next) {
+//   const schema = Joi.object({});
+//   validateRequest(req, next, schema);
+// }
 
 function notificationSchema(req, res, next) {
   const schema = Joi.object({});
@@ -526,7 +526,7 @@ function authorization(req, res, next) {
     params: { token },
   } = req;
   accountService
-    .authorization(token)
+    .authorization(req.user)
     .then((result) =>
       res.status(200).json({
         email: result.email,
