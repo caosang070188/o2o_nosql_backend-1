@@ -29,6 +29,7 @@ module.exports = {
   resetPassword,
   getAll,
   getById,
+  getAccountByUsername,
   create,
   update,
   delete: _delete,
@@ -38,7 +39,11 @@ module.exports = {
   authenticateChatUser,
   rawSubmitDeviceToken,
   callDeleteWOToken,
-  getListFriends
+  getListFriends,
+  generateFriends,
+  addFriend,
+  deleteFriend, 
+  findFriend
 };
 
 async function authenticate({
@@ -538,6 +543,12 @@ async function getAccount(id) {
   if (!account) throw "Account not found";
   return account;
 }
+async function getAccountByUsername(username) {
+  // if (!db.isValidId(username)) throw "Account not found";
+  const account = await db.Account.findOne({username});
+  if (!account) throw "Account not found";
+  return account;
+}
 
 async function getRefreshToken(token) {
   const refreshToken = await db.RefreshToken.findOne({ token }).populate(
@@ -809,15 +820,51 @@ async function callDeleteWOToken(username){
 async function getListFriends(prams){
   try{
     const {username, limit} = prams
-    console.log(username)
     const res = await axios.post("https://o2oviet.com/get_list_friends.php", {
       username,
       limit
     });
-    const { data } = res;
-    return data;
+    const { data, status } = res;
+    console.log(status)
+    if(status === 200){
+      return data;
+    }else{
+      return [];
+    }
   } catch (error) {
     throw error;
   }
   
+}
+
+
+function generateFriends(account, friend) {
+  // create a refresh token that expires in 7 days
+  return new db.Friends({
+    account: account,
+    friends: [...friend],
+  }).save();
+}
+
+function addFriend(account, friend) {
+  // create a refresh token that expires in 7 days
+  return db.Friends.update(
+    { 'account.id': account.id },
+    { $addToSet: { friends: friend } }
+  );
+}
+
+function deleteFriend(account, friend) {
+  // create a refresh token that expires in 7 days
+  return new db.Friends.update(
+    { 'account.id': account.id },
+    { $pull: { friends: { username: friend.username } } },
+    false, // Upsert
+    true, // Multi
+  );
+}
+function findFriend(account) {
+  // create a refresh token that expires in 7 days
+  const {id} = account
+  return db.Friends.findOne({ 'account.id': id });
 }

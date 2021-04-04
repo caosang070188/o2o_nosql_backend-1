@@ -12,6 +12,7 @@ module.exports = {
     Account: require('accounts/account.model'),
     Notification: require("notifications/notification.model"),
     RefreshToken: require('accounts/refresh-token.model'),
+    Friends: require('accounts/friends.model'),
     isValidId
 };
 
