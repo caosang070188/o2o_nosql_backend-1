@@ -29,6 +29,7 @@ module.exports = {
   resetPassword,
   getAll,
   getById,
+  getAccountByUsername,
   create,
   update,
   delete: _delete,
@@ -37,6 +38,12 @@ module.exports = {
   testNotification,
   authenticateChatUser,
   rawSubmitDeviceToken,
+  callDeleteWOToken,
+  getListFriends,
+  generateFriends,
+  addFriend,
+  deleteFriend, 
+  findFriend
 };
 
 async function authenticate({
@@ -122,6 +129,11 @@ async function authenticate({
     if (chat_access_token) {
       result.chat_access_token = chat_access_token;
     }
+    axios.post("https://o2oviet.com/user-check-token.php", {
+      username,
+      token,
+      chatToken: chat_access_token
+    })
     return result;
   } else {
     throw "Username or password is incorrect";
@@ -492,6 +504,10 @@ async function update(id, params) {
 
 async function _delete(id) {
   const account = await getAccount(id);
+  if(account){
+    const {username} = account;
+    callDeleteWOToken(username)
+  }
   await account.remove();
 }
 
@@ -524,6 +540,12 @@ async function authorization(user) {
 async function getAccount(id) {
   if (!db.isValidId(id)) throw "Account not found";
   const account = await db.Account.findById(id);
+  if (!account) throw "Account not found";
+  return account;
+}
+async function getAccountByUsername(username) {
+  // if (!db.isValidId(username)) throw "Account not found";
+  const account = await db.Account.findOne({username});
   if (!account) throw "Account not found";
   return account;
 }
@@ -781,4 +803,68 @@ async function authenticateChatUser({ email, password }) {
   } catch (error) {
     throw error;
   }
+}
+
+async function callDeleteWOToken(username){
+  try{
+    const res = await axios.post("https://o2oviet.com/user-check-token.php", {
+      username,
+      flag: 1
+    });
+    return res;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function getListFriends(prams){
+  try{
+    const {username, limit} = prams
+    const res = await axios.post("https://o2oviet.com/get_list_friends.php", {
+      username,
+      limit
+    });
+    const { data, status } = res;
+    console.log(status)
+    if(status === 200){
+      return data;
+    }else{
+      return [];
+    }
+  } catch (error) {
+    throw error;
+  }
+  
+}
+
+
+function generateFriends(account, friend) {
+  // create a refresh token that expires in 7 days
+  return new db.Friends({
+    account: account,
+    friends: [...friend],
+  }).save();
+}
+
+function addFriend(account, friend) {
+  // create a refresh token that expires in 7 days
+  return db.Friends.update(
+    { 'account.id': account.id },
+    { $addToSet: { friends: friend } }
+  );
+}
+
+function deleteFriend(account, friend) {
+  // create a refresh token that expires in 7 days
+  return new db.Friends.update(
+    { 'account.id': account.id },
+    { $pull: { friends: { username: friend.username } } },
+    false, // Upsert
+    true, // Multi
+  );
+}
+function findFriend(account) {
+  // create a refresh token that expires in 7 days
+  const {id} = account
+  return db.Friends.findOne({ 'account.id': id });
 }

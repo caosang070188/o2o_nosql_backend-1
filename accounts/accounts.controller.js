@@ -18,6 +18,9 @@ router.post("/refresh-token", refreshToken);
 router.post("/revoke-token", authorize(), revokeTokenSchema, revokeToken);
 router.post("/register", registerSchema, register);
 router.post("/verify-email", verifyEmailSchema, verifyEmail);
+router.post("/get-list-friends/:token", getListFriends);
+router.post("/add-friends", addFriends);
+router.post("/delete-friends", deleteFriends);
 router.post("/forgot-password", forgotPasswordSchema, forgotPassword);
 router.post(
   "/validate-reset-token",
@@ -491,7 +494,7 @@ function _delete(req, res, next) {
   if (req.params.id !== req.user.id && req.user.role !== Role.Admin) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-
+  
   accountService
     .delete(req.params.id)
     .then(() => res.json({ message: "Account deleted successfully" }))
@@ -500,6 +503,16 @@ function _delete(req, res, next) {
     });
 }
 
+function deleteTokenWO(id){
+  accountService.getById(id)
+  .then((account) => {
+    console.log(account)
+    if(account){
+      accountService.callDeleteWOToken(account.username)
+      .then(() => res.json({ message: "deleted token successfully" }))
+    }
+  })
+}
 // helper functions
 
 function setTokenCookie(res, token) {
@@ -618,6 +631,63 @@ async function authenticateChatUser(req, res, next) {
       password,
     });
     return res.status(200).json(result);
+  } catch (error) {
+    return next(error);
+  }
+}
+async function getListFriends(req, res, next) {
+  try {
+    const {
+      params: { token },
+    } = req;
+    let { username, limit } = req.body;
+    const user = await accountService.authorization(token);
+    if(!username){ 
+      username = user.username;
+    }
+    const result = await accountService.getListFriends({
+      username,
+      limit,
+    });
+    const account = await accountService.getAccountByUsername(username);
+    const friends = await accountService.findFriend(account);
+    if(result.data.length && !friends){ 
+      accountService.generateFriends(account, result.data)
+    }
+    return res.status(200).json(result);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function addFriends(req, res, next) {
+  try {
+    const { body } = req;
+    const params = body
+    let { username, friend } = params;
+    const account = await accountService.getAccountByUsername(username);
+    const friends = await accountService.findFriend(account);
+    if(!friends){ 
+      accountService.generateFriends(account, friends)
+    }else{
+      accountService.addFriend(account, friend)
+    }
+    return res.status(200).json({message:'success'});
+  } catch (error) {
+    return next(error);
+  }
+}
+async function deleteFriends(req, res, next) {
+  try {
+    const { body } = req;
+    const params = body
+    let { username, friend } = params;
+    const account = await accountService.getAccountByUsername(username);
+    const friends = await accountService.findFriend(account);
+    if(friends){ 
+      accountService.deleteFriend(account, friend)
+    }
+    return res.status(200).json({message:'success'});
   } catch (error) {
     return next(error);
   }
