@@ -471,6 +471,8 @@ function generateJwtToken(account) {
       id: account.id,
       email: account.email,
       username: account.username,
+      firsName: account.firstName,
+      lastName: account.lastName
     },
     config.secret,
     { expiresIn: "365d", algorithm: "HS256" }
