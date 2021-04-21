@@ -18,7 +18,7 @@ router.post("/refresh-token", refreshToken);
 router.post("/revoke-token", authorize(), revokeTokenSchema, revokeToken);
 router.post("/register", registerSchema, register);
 router.post("/verify-email", verifyEmailSchema, verifyEmail);
-router.post("/get-list-friends/:token", getListFriends);
+router.post("/get-list-friends", authorize(Role.User), getListFriends);
 router.post("/add-friends", addFriends);
 router.post("/delete-friends", deleteFriends);
 router.post("/forgot-password", forgotPasswordSchema, forgotPassword);
@@ -313,8 +313,7 @@ function register(req, res, next) {
     .register(req.body, req.get("origin"))
     .then(() =>
       res.json({
-        message:
-          "Đăng kí thành công rồi. Bạn vui lòng kiểm tra email để xác thực tài khoản nha.",
+        message: "Đăng kí thành công",
       })
     )
     .catch((err) => {
@@ -494,7 +493,7 @@ function _delete(req, res, next) {
   if (req.params.id !== req.user.id && req.user.role !== Role.Admin) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  
+
   accountService
     .delete(req.params.id)
     .then(() => res.json({ message: "Account deleted successfully" }))
@@ -503,15 +502,15 @@ function _delete(req, res, next) {
     });
 }
 
-function deleteTokenWO(id){
-  accountService.getById(id)
-  .then((account) => {
-    console.log(account)
-    if(account){
-      accountService.callDeleteWOToken(account.username)
-      .then(() => res.json({ message: "deleted token successfully" }))
+function deleteTokenWO(id) {
+  accountService.getById(id).then((account) => {
+    console.log(account);
+    if (account) {
+      accountService
+        .callDeleteWOToken(account.username)
+        .then(() => res.json({ message: "deleted token successfully" }));
     }
-  })
+  });
 }
 // helper functions
 
@@ -545,7 +544,7 @@ function authorization(req, res, next) {
         email: result.email,
         username: result.username,
         chat_access_token: result.chat_access_token,
-        message: "Authorization successfull!",
+        message: "Authorization successful!",
       })
     )
     .catch((error) => {
@@ -641,18 +640,20 @@ async function getListFriends(req, res, next) {
       params: { token },
     } = req;
     let { username, limit } = req.body;
-    const user = await accountService.authorization(token);
-    if(!username){ 
+    // const user = await accountService.authorization(token);
+    const user = req.user;
+    console.log("user", user);
+    if (!username) {
       username = user.username;
     }
     const result = await accountService.getListFriends({
       username,
       limit,
     });
-    const account = await accountService.getAccountByUsername(username);
-    const friends = await accountService.findFriend(account);
-    if(result.data.length && !friends){ 
-      accountService.generateFriends(account, result.data)
+    // const account = await accountService.getAccountByUsername(username);
+    const friends = await accountService.findFriend(user);
+    if (result.data.length && !friends) {
+      accountService.generateFriends(user, result.data);
     }
     return res.status(200).json(result);
   } catch (error) {
@@ -663,16 +664,16 @@ async function getListFriends(req, res, next) {
 async function addFriends(req, res, next) {
   try {
     const { body } = req;
-    const params = body
+    const params = body;
     let { username, friend } = params;
     const account = await accountService.getAccountByUsername(username);
     const friends = await accountService.findFriend(account);
-    if(!friends){ 
-      accountService.generateFriends(account, friends)
-    }else{
-      accountService.addFriend(account, friend)
+    if (!friends) {
+      accountService.generateFriends(account, friends);
+    } else {
+      accountService.addFriend(account, friend);
     }
-    return res.status(200).json({message:'success'});
+    return res.status(200).json({ message: "success" });
   } catch (error) {
     return next(error);
   }
@@ -680,14 +681,14 @@ async function addFriends(req, res, next) {
 async function deleteFriends(req, res, next) {
   try {
     const { body } = req;
-    const params = body
+    const params = body;
     let { username, friend } = params;
     const account = await accountService.getAccountByUsername(username);
     const friends = await accountService.findFriend(account);
-    if(friends){ 
-      accountService.deleteFriend(account, friend)
+    if (friends) {
+      accountService.deleteFriend(account, friend);
     }
-    return res.status(200).json({message:'success'});
+    return res.status(200).json({ message: "success" });
   } catch (error) {
     return next(error);
   }

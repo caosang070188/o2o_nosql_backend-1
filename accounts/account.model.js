@@ -51,6 +51,10 @@ const schema = new Schema(
     updated: Date,
     chat_access_token: String,
     deviceTokens: [deviceTokenSchema],
+    password: {
+      type: String,
+      select: false,
+    },
   },
   { timestamps: true }
 );
@@ -71,4 +75,4 @@ schema.set("toJSON", {
   },
 });
 
-module.exports = mongoose.model("Account", schema);
+module.exports = mongoose.model("users", schema);

@@ -9,13 +9,9 @@ const axios = require("axios");
 const fetch = require("node-fetch");
 const Roles = require("../_helpers/role");
 const chatHandler = require("../chat/chat.handler");
+const argon = require("argon2");
 
-const {
-  changeChatUserPassword,
-  synchronizedChatUser,
-  updateChatUser,
-  authenticateChatAccessToken,
-} = chatHandler;
+const { authenticateChatAccessToken } = chatHandler;
 
 module.exports = {
   authenticate,
@@ -46,12 +42,7 @@ module.exports = {
   findFriend,
 };
 
-async function authenticate({
-  username,
-  password,
-  ipAddress,
-  isSynchroChatUser,
-}) {
+async function authenticate({ username, password, ipAddress }) {
   const res = await axios.post("https://o2oviet.com/user-check-register.php", {
       username,
       password,
@@ -59,15 +50,7 @@ async function authenticate({
     { data } = res;
 
   if (res.status === 200) {
-    const {
-      username,
-      email,
-      first_name,
-      last_name,
-      //   password,
-      phone_number,
-    } = data;
-    // console.log("DATA", data);
+    const { username } = data;
     const existAccount = {};
     existAccount.username = username;
     existAccount.firstName = data.first_name;
@@ -89,19 +72,8 @@ async function authenticate({
     existAccount.birthday = data.birthday;
     existAccount.language = data.language;
     existAccount.role = Role.User;
+    existAccount.password = await argon.hash(password);
     await db.Account.update({ username }, existAccount, { upsert: true });
-    const chatRegister = isSynchroChatUser
-      ? await synchronizedChatUser({
-          username,
-          email,
-          firstName: first_name,
-          lastName: last_name,
-          password,
-          phone: phone_number,
-        }).catch((error) => {
-          console.log("synchronize chat fail", error);
-        })
-      : null;
     const account = await db.Account.findOne({ username });
 
     if (!account || !bcrypt.compareSync(password, account.passwordHash)) {
@@ -111,28 +83,20 @@ async function authenticate({
     const token = generateJwtToken(account);
     const refreshToken = generateRefreshToken(account, ipAddress);
     account.token = token;
-    let chat_access_token = "";
-    let chat_user_id = "";
-    if (chatRegister && chatRegister.data && chatRegister.data.access_token) {
-      account.chat_access_token = chatRegister.data.access_token;
-      chat_access_token = chatRegister.data.access_token;
-      chat_user_id = chatRegister.data._id;
-    }
     await account.save();
     await refreshToken.save();
     const result = {
       ...basicDetails(account),
       token,
       refreshToken: refreshToken.token,
-      chat_user_id,
+      chat_user_id: account._id,
+      chat_access_token: token,
+      // chat_user_id,
     };
-    if (chat_access_token) {
-      result.chat_access_token = chat_access_token;
-    }
     axios.post("https://o2oviet.com/user-check-token.php", {
       username,
       token,
-      chatToken: chat_access_token,
+      chatToken: token,
     });
     return result;
   } else {
@@ -178,14 +142,7 @@ async function register(params, origin) {
   let { isSynchroChatUser, ...other } = params;
 
   params = other;
-  const {
-    username,
-    password,
-    firstName,
-    lastName,
-    phoneNumber,
-    email,
-  } = params;
+  const { password } = params;
 
   const data = await (
     await fetch("https://o2oviet.com/user.php", {
@@ -208,20 +165,6 @@ async function register(params, origin) {
   }
   const user = await db.Account.findOne({ username: params.username });
   if (user) {
-    // send already registered error in email to prevent account enumeration
-    // const tempUser = await db.Account.findOne({ username: params.username });
-    if (isSynchroChatUser) {
-      await synchronizedChatUser({
-        username: params.username,
-        email: params.email,
-        firstName: params.firstName,
-        lastName: params.lastName,
-        password: params.password,
-        phone: phoneNumber,
-      }).catch((error) => {
-        console.log("synchronize chat when register", error);
-      });
-    }
     return await sendAlreadyRegisteredEmail(user.email, origin);
   }
 
@@ -248,22 +191,10 @@ async function register(params, origin) {
 
   // hash password
   account.passwordHash = hash(params.password);
+  account.password = await argon.hash(password);
 
   // save account
   await account.save();
-
-  if (isSynchroChatUser) {
-    const chatUser = await synchronizedChatUser({
-      username,
-      email,
-      firstName,
-      lastName,
-      password,
-      phone: phoneNumber,
-    }).catch((error) => {
-      console.log("synchronize chat when register", error);
-    });
-  }
 
   // send email
   // await sendVerificationEmail(account, origin);
@@ -409,12 +340,9 @@ async function resetPassword({ token, password }) {
   account.passwordHash = hash(password);
   account.passwordReset = Date.now();
   account.resetToken = undefined;
+  account.password = await argon.hash(password);
   if (data.data.message == "Success") {
-    const chatUser = await changeChatUserPassword({
-      email: account.email,
-      newPassword: password,
-      access_token: account.chat_access_token,
-    });
+    i;
     await account.save();
   } else {
     throw "Đổi mật khẩu không thành công!";
@@ -442,18 +370,7 @@ async function create(params) {
 
   // hash password
   account.passwordHash = hash(params.password);
-  const { firstName, lastName, email, password, role, username } = params;
-  if (role === Roles.User) {
-    const chatUser = await synchronizedChatUser({
-      username,
-      firstName,
-      lastName,
-      email,
-      password,
-    }).catch((error) => {
-      console.log("synchronize chat error when create", error);
-    });
-  }
+  account.password = await argon.hash(params.password);
 
   // save account
   await account.save();
@@ -472,30 +389,16 @@ async function update(id, params) {
   ) {
     throw 'Email "' + params.email + '" is already taken';
   }
-  const chatUserUpdated = { ...params };
-  if (params.email) {
-    chatUserUpdated.newEmail = params.email;
-  }
-
-  // update chat user require email
-  chatUserUpdated.email = account.email;
 
   // hash password if it was entered
   if (params.password) {
     params.passwordHash = hash(params.password);
-    chatUserUpdated.newPassword = chatUserUpdated.password;
-    delete chatUserUpdated.password;
-    delete chatUserUpdated.confirmPassword;
+    params.password = await argon.hash(params.password);
   }
 
   // copy params to account and save
   Object.assign(account, params);
   account.updated = Date.now();
-
-  const chatUser = await updateChatUser({
-    ...chatUserUpdated,
-    access_token: account.chat_access_token,
-  });
 
   await account.save();
 
@@ -517,9 +420,8 @@ async function authorization(user) {
     //   account = await db.Account.findOne({ email });
     // if (!account) throw "Authorization fail!";
     console.log("user", user);
-    const chatAuth = await authenticateChatAccessToken(
-      user.chat_access_token
-    ).catch((error) => {
+    const token = generateJwtToken(user);
+    const chatAuth = await authenticateChatAccessToken(token).catch((error) => {
       console.log("error when authenticate chat user", error);
     });
 
@@ -680,14 +582,6 @@ async function submitDeviceToken(deviceToken, username) {
   const account = await db.Account.findOne({ username });
   if (!account) throw "Không tồn tại tài khoản này";
   account.deviceToken = deviceToken;
-  const result = await chatHandler
-    .updateDeviceToken({
-      token: deviceToken,
-      email: account.email,
-    })
-    .catch((error) => {
-      console.log("error when update chat device token", error);
-    });
   await account.save();
 }
 
@@ -736,11 +630,6 @@ async function rawSubmitDeviceToken({ deviceId, token, user_id, deviceType }) {
   if (user.deviceToken) {
     user.deviceToken = undefined;
   }
-  await chatHandler
-    .updateDeviceToken({ token, deviceId, email: user.email, deviceType })
-    .catch((error) => {
-      console.log("error when update chat device token", error);
-    });
   await user.save();
   return user;
 }
