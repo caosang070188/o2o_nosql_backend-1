@@ -471,7 +471,7 @@ function generateJwtToken(account) {
       id: account.id,
       email: account.email,
       username: account.username,
-      firsName: account.firstName,
+      firstName: account.firstName,
       lastName: account.lastName
     },
     config.secret,
