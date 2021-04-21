@@ -472,7 +472,7 @@ function generateJwtToken(account) {
       email: account.email,
       username: account.username,
       firstName: account.firstName,
-      lastName: account.lastName
+      lastName: account.lastName,
     },
     config.secret,
     { expiresIn: "365d", algorithm: "HS256" }
@@ -632,6 +632,16 @@ async function rawSubmitDeviceToken({ deviceId, token, user_id, deviceType }) {
   if (user.deviceToken) {
     user.deviceToken = undefined;
   }
+  // axios.post(
+  //   "http://localhost:3003/api/user/user/update-deviceToken"
+  // );
+  axios({
+    method: "PUT",
+    url: "http://localhost:3003/api/user/update-deviceToken",
+    data: { userId: user._id, deviceTokens: user.deviceTokens },
+  }).catch((error) => {
+    console.log("synchronized token error", error);
+  });
   await user.save();
   return user;
 }
