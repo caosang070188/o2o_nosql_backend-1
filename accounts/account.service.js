@@ -592,6 +592,7 @@ async function rawSubmitDeviceToken({ deviceId, token, user_id, deviceType }) {
   if (!user) {
     throw "Không tồn tại tài khoản này";
   }
+  console.log("device token", token, deviceType);
   if (token) {
     const deviceTokenItem = { deviceId, token, deviceType };
     console.log("device Token Item", deviceTokenItem);
