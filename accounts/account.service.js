@@ -638,7 +638,7 @@ async function rawSubmitDeviceToken({ deviceId, token, user_id, deviceType }) {
   // );
   axios({
     method: "PUT",
-    url: "http://localhost:3003/api/user/update-deviceToken",
+    url: "http://localhost:3003/api/user/user/update-deviceToken",
     data: { userId: user._id, deviceTokens: user.deviceTokens },
   }).catch((error) => {
     console.log("synchronized token error", error);
