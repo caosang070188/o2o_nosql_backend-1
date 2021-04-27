@@ -555,6 +555,9 @@ function authorization(req, res, next) {
 async function submitDeviceToken(req, res, next) {
   try {
     const user = req.user;
+    console.log("body", req.body);
+    console.log("params", req.params);
+    console.log("query", req.query);
     const { token, deviceId, deviceType } = req.body;
     // accountService
     //   .submitDeviceToken(req.body.token, req.user.username)
