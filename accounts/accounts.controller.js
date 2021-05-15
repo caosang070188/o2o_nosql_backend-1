@@ -146,21 +146,22 @@ router.post("/notification", async (req, res, next) => {
           notification: {
             title: title,
             body: body,
-            sound: "default",
-            click_action: "FLUTTER_NOTIFICATION_CLICK",
-            content_available: true,
-            priority: "high",
-            importance: "max",
-            android_channel_id: "channel_android_default",
+            // sound: "default",
+            // click_action: "FLUTTER_NOTIFICATION_CLICK",
+            // content_available: true,
+            // priority: "high",
+            // importance: "max",
+            // android_channel_id: "channel_android_default",
           },
           data: {
             url: url,
           },
+          priority: "high",
         };
         firebaseCloudMessage(bodyFCM, (err, data) => {
           console.log(err);
           if (err)
-            return res.status(302).json({ message: "Có lỗi gì đó ở FCM" });
+            return res.status(302).json({ message: "Đã xảy ra lỗi" });
           res.status(200).json({ data, message: "Success!" });
         });
       }
@@ -171,20 +172,21 @@ router.post("/notification", async (req, res, next) => {
         notification: {
           title: title,
           body: body,
-          sound: "default",
-          click_action: "FLUTTER_NOTIFICATION_CLICK",
-          content_available: true,
-          priority: "high",
-          importance: "max",
-          android_channel_id: "channel_android_default",
+          // sound: "default",
+          // click_action: "FLUTTER_NOTIFICATION_CLICK",
+          // content_available: true,
+          // priority: "high",
+          // importance: "max",
+          // android_channel_id: "channel_android_default",
         },
         data: {
           url: url,
         },
+        priority: "high",
       };
       firebaseCloudMessage(bodyFCM, (err, data) => {
         console.log(err);
-        if (err) return res.status(302).json({ message: "Có lỗi gì đó ở FCM" });
+        if (err) return res.status(302).json({ message: "Đã xảy ra lỗi" });
         res.status(200).json({ data, message: "Success!" });
       });
     } else {
